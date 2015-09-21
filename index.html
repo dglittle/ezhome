@@ -1,0 +1,74 @@
+<html>
+<head>
+<meta charset='utf-8'>
+<title>untitled</title>
+<meta name="viewport" content="width=device-width, user-scalable=no">
+</head>
+<body>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="http://dglittle.github.io/gl519/index.js"></script>
+<script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+<style>
+
+</style>
+<script>
+
+function drawForm(o) {
+    var d = $('<div/>')
+
+    function createCell(x, y) {
+        return '<table style="width:100%"><tr><td>' + _.escapeXml(x) + '</td><td style="text-align: right">' + _.escapeXml(y) + '</td></tr></table>'
+    }
+    function createRow(x1, y1, x2, y2) {
+        return '<tr><td colspan="2" style="border: 1px solid black;">' + createCell(x1, y1) + '</td><td colspan="2" style="border: 1px solid black;">' + createCell(x2, y2) + '</td></tr>'
+    }
+
+    var xs = _.pairs({
+        'LOT AREA' : 'XXX',
+        'SOFT AREA' : Math.round(o['soft (in^2)']/144) + ' SF',
+        'LOT AREA FROM ZILLOW' : 'XXX',
+        'F-LAWN AREA' : Math.round(o['flawn (in^2)']/144) + ' SF',
+        'BUILDING AREA' : Math.round(o['building (in^2)']/144) + ' SF',
+        'F-LAWN PERIMETER' : Math.round(o['flawn (in)']/12) + ' F',
+        'POOL AREA' : Math.round(o['pool (in^2)']/144) + ' SF',
+        'B-LAWN AREA' : Math.round(o['blawn (in^2)']/144) + ' SF',
+        'HARD AREA' : Math.round(o['hard (in^2)']/144) + ' SF',
+        'B-LAWN PERIMETER' : Math.round(o['blawn (in)']/12) + ' F'
+    })
+
+    var t = '<table style="width:100%">'
+    t += '<tr><td align="center" colspan="4" style="padding:5px;border: 1px solid black;" class="sketchup"></td></tr>'
+    for (var i = 0; i < xs.length; i += 2) {
+        t += createRow(xs[i][0], xs[i][1], xs[i + 1][0], xs[i + 1][1])
+    }
+    t += '<tr><td colspan="1" style="border: 1px solid black;">Client Name:</td><td colspan="2" rowspan="4" style="border: 1px solid black;">555 Somewhere, Somecity, CA 95555</td><td colspan="1" rowspan="1" style="border: 1px solid black;">Drawn by</td></tr>'
+    t += '<tr><td colspan="1" style="border: 1px solid black;">Phone:</td><td colspan="1" rowspan="3" style="border: 1px solid black;"><img style="width:200px" src="ezhome.png" /></td></tr>'
+    t += '<tr><td colspan="1" style="border: 1px solid black;">E-mail:</td></tr>'
+    t += '<tr><td colspan="1" style="border: 1px solid black;">Date:</td></tr>'
+    t += '</table>'
+    t = $(t)
+
+    t.find('.sketchup').append($('<img/>').attr('src', o.img))
+
+    d.append(t)
+    return d
+}
+
+$(function () {
+    $('head').append($('<style> html { box-sizing: border-box; } *, *:before, *:after { box-sizing: inherit; } body { margin: 0px } table { border-collapse: collapse; } th, td { padding: 0px; } </style>'))
+    
+    $(document).ajaxError(function () {
+        console.log('oh no, AJAX badness happened!')
+    })
+
+    $('body').append($('<div/>').text('loading...'))
+
+    var fb = new Firebase('https://ezhome.firebaseio.com/hello')
+    fb.on('value', function(o) {
+        $('body').css('margin', '5px').empty().append(drawForm(o.val()))
+    });
+})
+
+</script>
+</body>
+</html>
