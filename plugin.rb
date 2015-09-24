@@ -64,8 +64,8 @@ end
 def get_north()
 	x = get_layer_faces('north')
 	if x.length == 0
-		UI.messagebox('please add a box to the "north" layer, and place it north of the origin (it can be hidden to keep it out of view)')
-		raise
+		UI.messagebox('no north: please add a box to the "north" layer, and place it north of the origin (it can be hidden to keep it out of view)')
+		return 0
 	end
 	sum = Geom::Vector3d.new(0, 0, 0)
 	count = 0
