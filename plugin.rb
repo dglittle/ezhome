@@ -1,10 +1,11 @@
+
+p 'version 19'
+
 require 'sketchup.rb'
 require 'net/http'
 require 'net/https'
 require 'base64'
 require 'json'
-
-p 'version 15'
 
 def get_layer_faces(layer_name)
 	y = []
@@ -60,16 +61,62 @@ def layer_perimeter_xy(layer_name)
 	return a
 end
 
-def main
+def get_north()
+	x = get_layer_faces('north')
+	if x.length == 0
+		UI.messagebox('please add a box to the "north" layer, and place it north of the origin (it can be hidden to keep it out of view)')
+		raise
+	end
+	sum = Geom::Vector3d.new(0, 0, 0)
+	count = 0
+	x.each { |x|
+		x.mesh.points.each { |x|
+			sum = sum + Geom::Vector3d.new(x[0], x[1], x[2])
+			count = count + 1
+		}
+	}
+	x = Geom::Vector3d.new(sum[0]/count, sum[1]/count, sum[2]/count)
+
+	c = Sketchup.active_model.active_view.camera
+	eye = Geom::Vector3d.new(c.eye[0], c.eye[1], c.eye[2])
+	o = Geom::Vector3d.new(0, 0, 0) - eye
+	o = [o.dot(c.xaxis), o.dot(c.yaxis)]
+	x = x - eye
+	x = [x.dot(c.xaxis), x.dot(c.yaxis)]
+
+	return Math.atan2(x[1] - o[1], x[0] - o[0])
+end
+
+def post_to_firebase(homeKey)
 	h = {}
 
+	m = Sketchup.active_model
+	m.save 'delete_me.skp'
+	x = IO.read('delete_me.skp')
+	x = Base64.encode64(x)
+	h['skp'] = x
+
 	v = Sketchup.active_model.active_view
-	v.write_image 'testing_xyz.jpg', 300, (300.0/(v.vpwidth.to_f/v.vpheight))
-	x = IO.read('testing_xyz.jpg')
+	vw = 1000
+	vh = (vw/(v.vpwidth.to_f/v.vpheight)).round
+	v.write_image({
+		:filename => 'delete_me.png',
+		:width => vw,
+		:height => vh,
+		:transparent => true})
+	x = IO.read('delete_me.png')
 	x = Base64.encode64(x)
 	x.gsub!("\n", '')
 	x = 'data:image/png;base64,' + x
 	h['img'] = x
+
+	c = v.camera
+	tau = 2*Math::PI
+	if c.fov_is_height?
+		h['scale (in per px)'] = (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vh/2)
+	else
+		h['scale (in per px)'] = (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vw/2)
+	end
 
 	h['soft (in^2)'] = layer_area_xy('soft')
 	h['hard (in^2)'] = layer_area_xy('hard')
@@ -79,15 +126,33 @@ def main
 	h['blawn (in^2)'] = layer_area_xy('blawn')
 	h['blawn (in)'] = layer_perimeter_xy('blawn')
 	h['building (in^2)'] = layer_area_xy('building')
+	h['north'] = get_north()
 
 	https = Net::HTTP.new('ezhome.firebaseio.com', 443)
 	https.use_ssl = true
 	https.verify_mode = OpenSSL::SSL::VERIFY_NONE
-	https.send_request('PATCH', '/hello.json', JSON.generate(h))
+	https.send_request('PATCH', '/home/' + URI.escape(homeKey) + '/.json', JSON.generate(h))
 	p 'posted'
 end
 
-main
+UI.add_context_menu_handler do |context_menu|
+	context_menu.add_item("ezhome plugin") {
+		d = UI::WebDialog.new("ezhome plugin", false, "ezhome plugin", 200, 200, 200, 200, true)
+		d.add_action_callback("ezhome_upload") do |web_dialog, action_name|
+			post_to_firebase(action_name.to_s)
+		end
+		d.add_action_callback("ezhome_download") do |web_dialog, action_name|
+			x = 'https://ezhome.firebaseio.com/home/' + URI.escape(action_name) + '/skp.json'
+			x = open(x, { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }).read
+			x = eval(x)
+			x = Base64.decode64(x)
+			File.open('delete_me.skp', 'w').write(x)
+			Sketchup.open_file('delete_me.skp')
+		end
+		d.set_url('http://localhost:8080/index.html?sketchup=true')
+		d.show()
+	}
+end
 
 
 
