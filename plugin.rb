@@ -149,7 +149,7 @@ UI.add_context_menu_handler do |context_menu|
 			File.open('delete_me.skp', 'w').write(x)
 			Sketchup.open_file('delete_me.skp')
 		end
-		d.set_url('http://localhost:8080/index.html?sketchup=true')
+		d.set_url('http://dglittle.github.io/ezhome/index.html?sketchup=true')
 		d.show()
 	}
 end
