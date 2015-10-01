@@ -15,6 +15,6 @@ UI.add_context_menu_handler do |context_menu|
 		p 'hello, I am before'
 		require 'open-uri'
 		p 'hello, I am after'
-		UI.messagebox('Hello World!')
+		UI.messagebox('Hello World 44!')
 	}
 end
