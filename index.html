@@ -172,7 +172,7 @@ $(function () {
 
 
         // work here
-        header.append($('<div/>').text('begin9'))
+        header.append($('<div/>').text('begin10'))
         var w = 100
         var h = 100
         var c = $('<canvas width="' + w + '" height="' + h + '"/>')
@@ -186,6 +186,7 @@ $(function () {
                 header.append($('<div/>').text('err: ' + c[0]))
             }
 
+            // work here
             // g.beginPath()
             // g.moveTo(0, 0)
             // g.lineTo(100, 100)
@@ -195,6 +196,12 @@ $(function () {
             // header.append(c)
         }, 0)
         header.append($('<div/>').text('end'))
+
+        var ii
+        header.append(ii = $('<input type="text"/>'))
+        header.append($('<button/>').text('gogo').click(function () {
+            frame.attr('src', ii.val())
+        }))
 
 
 
