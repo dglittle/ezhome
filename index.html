@@ -172,11 +172,15 @@ $(function () {
 
 
         // work here
-        header.append($('<div/>').text('begin4'))
+        header.append($('<div/>').text('begin5'))
         var w = 100
         var h = 100
         var c = $('<canvas width="' + w + '" height="' + h + '"/>')
-        // var g = c[0].getContext('2d')
+        try {
+            var g = c[0].getContext('2d')
+        } catch (e) {
+            header.append($('<div/>').text('err: ' + e))
+        }
 
         // g.beginPath()
         // g.moveTo(0, 0)
