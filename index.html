@@ -19,6 +19,22 @@ var tau = 2*Math.PI
 function drawBlueprint(o) {
     var d = $('<div style="width:100%;height:100%;">')
     function draw() {
+
+
+
+
+        // work here
+        var w = d.width()
+        var h = d.height()
+        console.log('got here???: ' + img.complete)
+        console.log('got here222: ' + img.naturalWidth)
+        console.log('got w: ' + w)
+        console.log('got h: ' + h)
+
+
+
+
+
         if (!img.complete || img.naturalWidth === 0) return
         var w = d.width()
         var h = d.height()
@@ -145,7 +161,7 @@ function drawForm(o) {
 }
 
 $(function () {
-    $('head').append($('<style> html { box-sizing: border-box; } *, *:before, *:after { box-sizing: inherit; } body { margin: 0px } table { border-collapse: collapse; } th, td { padding: 0px; } </style>'))
+    $('head').append($('<style> html { height: 100%; box-sizing: border-box; } *, *:before, *:after { box-sizing: inherit; } body { height: 100%; margin: 0px } table { border-collapse: collapse; } th, td { padding: 0px; } </style>'))
     
     $(document).ajaxError(function () {
         console.log('oh no, AJAX badness happened!')
@@ -169,7 +185,6 @@ $(function () {
         header.append($('<button/>').text('save image').click(function () {
             alert('not implemented yet..')
         }))
-
         var frame = $('<iframe frameborder="0" width="100%" height="100%">')
         $('body').append(_.splitVert(2, 1, header, frame))
     } else if (params.homeKey) {
