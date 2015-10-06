@@ -172,7 +172,7 @@ $(function () {
 
 
         // work here
-        header.append($('<div/>').text('begin8'))
+        header.append($('<div/>').text('begin9'))
         var w = 100
         var h = 100
         var c = $('<canvas width="' + w + '" height="' + h + '"/>')
@@ -183,6 +183,7 @@ $(function () {
             } catch (e) {
                 header.append($('<div/>').text('err: ' + e))
                 header.append($('<div/>').text('err: ' + e.message))
+                header.append($('<div/>').text('err: ' + c[0]))
             }
 
             // g.beginPath()
