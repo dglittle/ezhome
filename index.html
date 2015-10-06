@@ -172,10 +172,11 @@ $(function () {
 
 
         // work here
-        header.append($('<div/>').text('begin7'))
+        header.append($('<div/>').text('begin8'))
         var w = 100
         var h = 100
         var c = $('<canvas width="' + w + '" height="' + h + '"/>')
+        header.append(c)
         setTimeout(function () {
             try {
                 var g = c[0].getContext('2d')
