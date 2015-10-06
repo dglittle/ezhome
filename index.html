@@ -173,7 +173,7 @@ $(function () {
 
 
         // work here
-        header.append($('<div/>').text('begin11'))
+        header.append($('<div/>').text('begin12'))
         var w = 100
         var h = 100
         var c = $('<canvas width="' + w + '" height="' + h + '"/>')
@@ -188,13 +188,12 @@ $(function () {
             }
 
             // work here
-            // g.beginPath()
-            // g.moveTo(0, 0)
-            // g.lineTo(100, 100)
-            // g.lineWidth = '1px'
-            // g.strokeStyle = 'lightgrey'
-            // g.stroke()
-            // header.append(c)
+            g.beginPath()
+            g.moveTo(0, 0)
+            g.lineTo(100, 100)
+            g.lineWidth = '1px'
+            g.strokeStyle = 'lightgrey'
+            g.stroke()
         }, 0)
         header.append($('<div/>').text('end'))
 
