@@ -114,7 +114,7 @@ function drawForm(o) {
     }
 
     var xs = _.pairs({
-        'LOT AREA' : 'XXX',
+        'LOT AREA' : Math.round(o['lot (in^2)']/144) + ' SF',
         'SOFT AREA' : Math.round(o['soft (in^2)']/144) + ' SF',
         'LOT AREA FROM ZILLOW' : 'XXX',
         'F-LAWN AREA' : Math.round(o['flawn (in^2)']/144) + ' SF',
