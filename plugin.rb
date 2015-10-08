@@ -1,5 +1,5 @@
 
-p 'version 20'
+p 'version 21'
 
 require 'sketchup.rb'
 require 'net/http'
@@ -104,7 +104,7 @@ def post_to_firebase(homeKey)
 		:width => vw,
 		:height => vh,
 		:transparent => true})
-	x = IO.read('delete_me.png')
+	x = IO.binread('delete_me.png')
 	x = Base64.encode64(x)
 	x.gsub!("\n", '')
 	x = 'data:image/png;base64,' + x
