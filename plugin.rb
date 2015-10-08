@@ -112,7 +112,9 @@ def post_to_firebase(homeKey)
 
 	c = v.camera
 	tau = 2*Math::PI
-	if c.fov_is_height?
+	if c.perspective?
+		h['scale (in per px)'] = c.height / vh
+	elsif c.fov_is_height?
 		h['scale (in per px)'] = (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vh/2)
 	else
 		h['scale (in per px)'] = (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vw/2)
