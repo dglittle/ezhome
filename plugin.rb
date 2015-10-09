@@ -1,5 +1,5 @@
 
-p 'version 28'
+p 'version 29'
 
 $ezhomeFirebaseName = 'ezh-estimator-dev'
 
@@ -63,6 +63,10 @@ def layer_perimeter_xy(layer_name)
 	return a
 end
 
+def random_name()
+	return (0...8).map { (65 + rand(26)).chr }.join
+end
+
 def get_north()
 	x = get_layer_faces('north')
 	if x.length == 0
@@ -96,8 +100,8 @@ def post_to_firebase(homeKey)
 	begin
 		m.save_copy 'delete_me.skp'
 	rescue ArgumentError
-		randomName = (0...8).map { (65 + rand(26)).chr }.join
-		m.save 'untitled_' + randomName + '.skp'
+		randomName = 
+		m.save 'untitled_' + random_name() + '.skp'
 		m.save_copy 'delete_me.skp'
 	end
 	x = IO.binread('delete_me.skp')
@@ -158,8 +162,9 @@ UI.add_context_menu_handler do |context_menu|
 			x = open(x, { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }).read
 			x = eval(x)
 			x = Base64.decode64(x)
-			File.open('delete_me.skp', 'w').write(x)
-			Sketchup.open_file('delete_me.skp')
+			randomName = 'untitled_' + random_name() + '.skp'
+			File.open(randomName, 'w').write(x)
+			Sketchup.open_file(randomName)
 		end
 		d.set_url('http://dglittle.github.io/ezhome/index.html?sketchup=true')
 		d.show()
