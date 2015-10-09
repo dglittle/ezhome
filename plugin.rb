@@ -1,7 +1,7 @@
 
-p 'version 24'
+p 'version 25'
 
-ezhomeFirebaseName = 'ezh-estimator-dev'
+$ezhomeFirebaseName = 'ezh-estimator-dev'
 
 require 'sketchup.rb'
 require 'net/http'
@@ -133,7 +133,7 @@ def post_to_firebase(homeKey)
 	h['building (in^2)'] = layer_area_xy('building')
 	h['north'] = get_north()
 
-	https = Net::HTTP.new(ezhomeFirebaseName + '.firebaseio.com', 443)
+	https = Net::HTTP.new($ezhomeFirebaseName + '.firebaseio.com', 443)
 	https.use_ssl = true
 	https.verify_mode = OpenSSL::SSL::VERIFY_NONE
 	https.send_request('PATCH', '/home/' + URI.escape(homeKey) + '/.json', JSON.generate(h))
@@ -147,7 +147,7 @@ UI.add_context_menu_handler do |context_menu|
 			post_to_firebase(action_name.to_s)
 		end
 		d.add_action_callback("ezhome_download") do |web_dialog, action_name|
-			x = 'https://' + ezhomeFirebaseName + '.firebaseio.com/home/' + URI.escape(action_name) + '/skp.json'
+			x = 'https://' + $ezhomeFirebaseName + '.firebaseio.com/home/' + URI.escape(action_name) + '/skp.json'
 			x = open(x, { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }).read
 			x = eval(x)
 			x = Base64.decode64(x)
