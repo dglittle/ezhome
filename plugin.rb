@@ -1,5 +1,5 @@
 
-p 'version 25'
+p 'version 27'
 
 $ezhomeFirebaseName = 'ezh-estimator-dev'
 
@@ -122,6 +122,7 @@ def post_to_firebase(homeKey)
 		h['scale (in per px)'] = (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vw/2)
 	end
 
+	h['time'] = Time.now.to_f * 1000
 	h['lot (in^2)'] = layer_area_xy('lot')
 	h['soft (in^2)'] = layer_area_xy('soft')
 	h['hard (in^2)'] = layer_area_xy('hard')

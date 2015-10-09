@@ -136,7 +136,7 @@ function drawForm(o) {
     t += '<tr><td colspan="1" style="border: 1px solid black;">Client Name:</td><td colspan="2" rowspan="4" style="border: 1px solid black;">555 Somewhere, Somecity, CA 95555</td><td colspan="1" rowspan="1" style="border: 1px solid black;">Drawn by</td></tr>'
     t += '<tr><td colspan="1" style="border: 1px solid black;">Phone:</td><td colspan="1" rowspan="3" style="border: 1px solid black;"><img style="width:200px" src="ezhome.png" /></td></tr>'
     t += '<tr><td colspan="1" style="border: 1px solid black;">E-mail:</td></tr>'
-    t += '<tr><td colspan="1" style="border: 1px solid black;">Date:</td></tr>'
+    t += '<tr><td colspan="1" style="border: 1px solid black;">Date: ' + _.escapeXml(new Date(o['time']).toLocaleDateString()) + '</td></tr>'
     t += '</table>'
     t = $(t)
 
