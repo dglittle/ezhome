@@ -93,8 +93,8 @@ def post_to_firebase(homeKey)
 	h = {}
 
 	m = Sketchup.active_model
-	m.save 'delete_me.skp'
-	x = IO.read('delete_me.skp')
+	m.save_copy 'delete_me.skp'
+	x = IO.binread('delete_me.skp')
 	x = Base64.encode64(x)
 	h['skp'] = x
 
