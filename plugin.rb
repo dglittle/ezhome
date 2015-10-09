@@ -1,5 +1,5 @@
 
-p 'version 27'
+p 'version 28'
 
 $ezhomeFirebaseName = 'ezh-estimator-dev'
 
@@ -93,7 +93,13 @@ def post_to_firebase(homeKey)
 	h = {}
 
 	m = Sketchup.active_model
-	m.save_copy 'delete_me.skp'
+	begin
+		m.save_copy 'delete_me.skp'
+	rescue ArgumentError
+		randomName = (0...8).map { (65 + rand(26)).chr }.join
+		m.save 'untitled_' + randomName + '.skp'
+		m.save_copy 'delete_me.skp'
+	end
 	x = IO.binread('delete_me.skp')
 	x = Base64.encode64(x)
 	h['skp'] = x
