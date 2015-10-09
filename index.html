@@ -163,10 +163,8 @@ $(function () {
             window.location.href = 'skp:ezhome_upload@' + homeKey
         }))
         header.append($('<button/>').text('send model to sketchup').click(function () {
-            if (confirm('this will overwrite your model in sketchup, is this ok?')) {
-                var homeKey = header.find('input').val()
-                window.location.href = 'skp:ezhome_download@' + homeKey
-            }
+            var homeKey = header.find('input').val()
+            window.location.href = 'skp:ezhome_download@' + homeKey
         }))
         header.append($('<button/>').text('save image').click(function () {
             alert('not implemented yet..')
