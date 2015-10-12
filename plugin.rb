@@ -9,6 +9,107 @@ require 'net/https'
 require 'base64'
 require 'json'
 
+###############################################################
+
+def combine_if_overlapping(a, b)
+	$epsilon = 0.0001
+	def edge_angle(x)
+		return Math.atan2(x[1][1] - x[0][1], x[1][0] - x[0][0]) % Math::PI
+	end
+	def points_overlap?(a, b)
+		return (a[0] - b[0]).abs < $epsilon && (a[1] - b[1]).abs < $epsilon
+	end
+	def edges_same_angle(a, b)
+		return (edge_angle(a) - edge_angle(b)).abs < $epsilon
+	end
+
+	if edges_same_angle(a, b) and
+		(points_overlap?(a[0], b[0]) or edges_same_angle(a, [a[0], b[0]])) and
+		(points_overlap?(a[0], b[1]) or edges_same_angle(a, [a[0], b[1]]))
+		
+		i = (a[0][0] - a[1][0]).abs < $epsilon ? 1 : 0
+		if [a[0][i], a[1][i]].max < [b[0][i], b[1][i]].min then return nil end
+		if [a[0][i], a[1][i]].min > [b[0][i], b[1][i]].max then return nil end
+
+		x = [a[0], a[1], b[0], b[1]].sort_by! { |x| x[i] }
+		x = [x[0], x[3]]
+		if x[0][0] > x[1][0] or (x[0][0] == x[1][0] and x[0][1] > x[1][1]) then x.reverse! end
+		return x
+	end
+	return nil
+end
+
+def do_line_segments_intersect?(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y)
+    s1_x = p1_x - p0_x
+    s1_y = p1_y - p0_y
+    s2_x = p3_x - p2_x
+    s2_y = p3_y - p2_y
+
+    s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y)
+    t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y)
+
+    return s >= 0 && s <= 1 && t >= 0 && t <= 1
+end
+
+def on_same_side_of_line_segment?(o, x, y, a)
+	xy = [y[0] - x[0], y[1] - x[1]]
+	xo = [o[0] - x[0], o[1] - x[1]]
+	xa = [a[0] - x[0], a[1] - x[1]]
+	xy_perp = [xy[1], -xy[0]]
+	return (xo[0]*xy_perp[0] + xo[1]*xy_perp[1]) * (xa[0]*xy_perp[0] + xa[1]*xy_perp[1]) >= 0
+end
+
+def create_dimension(o, x, y, howFarAwayFromEdge)
+	o = Geom::Point3d.new(o[0], o[1], 0)
+	x = Geom::Point3d.new(x[0], x[1], 0)
+	y = Geom::Point3d.new(y[0], y[1], 0)
+	xy = y - x
+	xy_perp = [xy[1], -xy[0], 0]
+	if on_same_side_of_line_segment?(o, x, y, x + xy_perp)
+		xy_perp = [-xy_perp[0], -xy_perp[1], 0]
+	end
+	xy_perp = Geom::Vector3d.new(xy_perp[0], xy_perp[1], 0)
+	xy_perp.normalize!
+	xy_perp.x = xy_perp.x * howFarAwayFromEdge
+	xy_perp.y = xy_perp.y * howFarAwayFromEdge
+	Sketchup.active_model.entities.add_dimension_linear(x, y, xy_perp)
+end
+
+def add_dimension_lines()
+	ee = Sketchup.active_model.entities.find_all { |x| x.is_a?(Sketchup::Edge) }
+
+	ee.map! { |e| [[e.start.position.x, e.start.position.y], [e.end.position.x, e.end.position.y]] }
+
+	pool = []
+	put_in_pool = lambda do |x|
+		poolOverlapping = []
+		poolNotOverlapping = []
+		pool.each { |y|
+			o = combine_if_overlapping(x, y)
+			if o then poolOverlapping.push(y) else poolNotOverlapping.push(y) end
+		}
+		pool = poolNotOverlapping
+		new_kid = poolOverlapping.inject(x) { |accum, y| combine_if_overlapping(accum, y) }
+		pool.push(new_kid)		
+	end
+	ee.each { |e| put_in_pool.call(e) }
+
+	midX = (pool.map {|x| x[0][0]}).concat(pool.map {|x| x[1][0]}).minmax.inject(:+)/2
+	midY = (pool.map {|x| x[0][1]}).concat(pool.map {|x| x[1][1]}).minmax.inject(:+)/2
+	mid = [midX, midY]
+
+	pool.each {|x|
+		outter = pool.all? {|y|
+			on_same_side_of_line_segment?(mid, x[0], x[1], y[0]) && on_same_side_of_line_segment?(mid, x[0], x[1], y[1])
+		}
+		if outter
+			create_dimension(mid, x[0], x[1], 5 * 12)
+		end
+	}
+end
+
+###############################################################
+
 def get_layer_faces(layer_name)
 	y = []
 	Sketchup.active_model.entities.each { |x| if x.layer.name == layer_name and x.is_a?(Sketchup::Face) then y.push(x) end }
@@ -165,6 +266,9 @@ UI.add_context_menu_handler do |context_menu|
 			randomName = 'untitled_' + random_name() + '.skp'
 			File.open(randomName, 'w').write(x)
 			Sketchup.open_file(randomName)
+		end
+		d.add_action_callback("ezhome_add_dimension_lines") do |web_dialog, action_name|
+			add_dimension_lines
 		end
 		d.set_url('http://dglittle.github.io/ezhome/index.html?sketchup=true')
 		d.show()
