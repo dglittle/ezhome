@@ -108,6 +108,15 @@ def add_dimension_lines()
 	}
 end
 
+def convert_dimensions_to_just_feet()
+	xx = Sketchup.active_model.entities.find_all { |x| x.is_a?(Sketchup::DimensionLinear) }
+	xx.each { |x|
+		# work here
+		p 'dimension text'
+		p text
+	}
+end
+
 ###############################################################
 
 def get_layer_faces(layer_name)
@@ -266,8 +275,8 @@ UI.add_context_menu_handler do |context_menu|
 			File.open(randomName, 'w').write(x)
 			Sketchup.open_file(randomName)
 		end
-		d.add_action_callback("ezhome_add_dimension_lines") do |web_dialog, action_name|
-			add_dimension_lines
+		d.add_action_callback("ezhome_dimensions") do |web_dialog, action_name|
+			convert_dimensions_to_just_feet
 		end
 		d.set_url('http://dglittle.github.io/ezhome/index.html?sketchup=true')
 		d.show()
