@@ -201,7 +201,6 @@ def post_to_firebase(homeKey)
 	begin
 		m.save_copy 'delete_me.skp'
 	rescue ArgumentError
-		randomName = 
 		m.save 'untitled_' + random_name() + '.skp'
 		m.save_copy 'delete_me.skp'
 	end

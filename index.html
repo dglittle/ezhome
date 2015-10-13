@@ -162,15 +162,15 @@ $(function () {
             frame.attr('src', window.location.href.match(/(.*?)\?/)[1] + '?homeKey=' + _.escapeUrl(homeKey))
             window.location.href = 'skp:ezhome_upload@' + homeKey
         }))
-        header.append($('<button/>').text('send model to sketchup').click(function () {
-            var homeKey = header.find('input').val()
-            window.location.href = 'skp:ezhome_download@' + homeKey
-        }))
-        header.append($('<button/>').text('save image').click(function () {
-            alert('not implemented yet..')
-        }))
-        header.append($('<button/>').text('add dimension lines').click(function () {
-            window.location.href = 'skp:ezhome_add_dimension_lines@yup'
+        // header.append($('<button/>').text('send model to sketchup').click(function () {
+        //     var homeKey = header.find('input').val()
+        //     window.location.href = 'skp:ezhome_download@' + homeKey
+        // }))
+        // header.append($('<button/>').text('save image').click(function () {
+        //     alert('not implemented yet..')
+        // }))
+        header.append($('<button/>').text('convert dimensions to feet with no inches').click(function () {
+            window.location.href = 'skp:ezhome_dimensions@yup'
         }))
         var frame = $('<iframe frameborder="0" width="100%" height="100%">')
         $('body').append(_.splitVert(2, 1, header, frame))
