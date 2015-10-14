@@ -128,7 +128,7 @@ function drawForm(o) {
         'B-LAWN PERIMETER' : Math.round(o['blawn (in)']/12) + ' F'
     })
 
-    var t = '<table style="width:100%;height:100%">'
+    var t = '<table style="width:100%;height:700px">'
     t += '<tr><td height="100%" align="center" colspan="4" style="border: 1px solid black;" class="sketchup"></td></tr>'
     for (var i = 0; i < xs.length; i += 2) {
         t += createRow(xs[i][0], xs[i][1], xs[i + 1][0], xs[i + 1][1])
