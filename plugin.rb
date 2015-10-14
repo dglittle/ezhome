@@ -112,6 +112,7 @@ def convert_dimensions_to_just_feet()
 	xx = Sketchup.active_model.entities.find_all { |x| x.is_a?(Sketchup::DimensionLinear) }
 	xx.each { |x|
 		x.text = (x.start[1].distance(x.end[1]) / 12).round(1).to_s + "'"
+		x.has_aligned_text = true
 	}
 end
 
