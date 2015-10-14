@@ -153,6 +153,8 @@ function drawBlueprintCanvas(o, w) {
     var bh = bw
     var lh = h - 2*m - bh
 
+    alert('version 2')
+
     var c = $('<canvas width="' + w + '" height="' + h + '"/>')
     var g = c[0].getContext('2d')
 
@@ -191,7 +193,7 @@ function drawBlueprintCanvas(o, w) {
         g.fillText('0 FT', x, y - gridSize*.1)
         g.fillText('25 FT', x + 5*gridSize, y - gridSize*.1)
     }
-    drawRuler(m + gridSize, m + bh - gridSize)
+    // drawRuler(m + gridSize, m + bh - gridSize)
 
     function drawCompass(x, y, north) {
         g.beginPath()
@@ -214,15 +216,15 @@ function drawBlueprintCanvas(o, w) {
         g.fillText('N', 0, 0)
         g.setTransform(1, 0, 0, 1, 0, 0)
     }
-    drawCompass(w - m - gridSize*2, m + gridSize*2, o.north)
+    // drawCompass(w - m - gridSize*2, m + gridSize*2, o.north)
 
-    if (bw/bh > img.width/img.height) {
-        var x = h/(img.height/img.width)
-        g.drawImage(img, w/2 - x/2, 0, x, h)
-    } else {
-        var x = w/(img.width/img.height)
-        g.drawImage(img, 0, h/2 - x/2, w, x)
-    }
+    // if (bw/bh > img.width/img.height) {
+    //     var x = bh/(img.height/img.width)
+    //     g.drawImage(img, m + bw/2 - x/2, 0, x, bh)
+    // } else {
+    //     var x = bw/(img.width/img.height)
+    //     g.drawImage(img, 0, bh/2 - x/2, bw, x)
+    // }
 
     return c
 }
@@ -238,12 +240,10 @@ $(function () {
     if (params.sketchup) {
         var header = $('<div/>')
 
-
         // work here
         header.append($('<button/>').text('view').click(function () {
             window.ezhome_slurp_callback = function (o) {
-                //header.append(drawBlueprintCanvas(o, 400))
-
+                //window.bottomPart.empty().append(drawBlueprintCanvas(o, 400))
                 window.bottomPart.empty().append(drawForm(o))
             }
             window.location.href = 'skp:slurp@yup'
