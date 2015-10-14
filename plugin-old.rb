@@ -1,5 +1,5 @@
 
-p 'version 30'
+p 'version 29'
 
 $ezhomeFirebaseName = 'ezh-estimator-dev'
 
@@ -9,6 +9,105 @@ require 'net/https'
 require 'base64'
 require 'json'
 
+###############################################################
+
+def combine_if_overlapping(a, b)
+	$epsilon = 0.0001
+	def edge_angle(x)
+		return Math.atan2(x[1][1] - x[0][1], x[1][0] - x[0][0]) % Math::PI
+	end
+	def points_overlap?(a, b)
+		return (a[0] - b[0]).abs < $epsilon && (a[1] - b[1]).abs < $epsilon
+	end
+	def edges_same_angle(a, b)
+		return (edge_angle(a) - edge_angle(b)).abs < $epsilon
+	end
+
+	if edges_same_angle(a, b) and
+		(points_overlap?(a[0], b[0]) or edges_same_angle(a, [a[0], b[0]])) and
+		(points_overlap?(a[0], b[1]) or edges_same_angle(a, [a[0], b[1]]))
+		
+		i = (a[0][0] - a[1][0]).abs < $epsilon ? 1 : 0
+		if [a[0][i], a[1][i]].max < [b[0][i], b[1][i]].min then return nil end
+		if [a[0][i], a[1][i]].min > [b[0][i], b[1][i]].max then return nil end
+
+		x = [a[0], a[1], b[0], b[1]].sort_by! { |x| x[i] }
+		x = [x[0], x[3]]
+		if x[0][0] > x[1][0] or (x[0][0] == x[1][0] and x[0][1] > x[1][1]) then x.reverse! end
+		return x
+	end
+	return nil
+end
+
+def do_line_segments_intersect?(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y)
+    s1_x = p1_x - p0_x
+    s1_y = p1_y - p0_y
+    s2_x = p3_x - p2_x
+    s2_y = p3_y - p2_y
+
+    s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y)
+    t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y)
+
+    return s >= 0 && s <= 1 && t >= 0 && t <= 1
+end
+
+def on_same_side_of_line_segment?(o, x, y, a)
+	xy = [y[0] - x[0], y[1] - x[1]]
+	xo = [o[0] - x[0], o[1] - x[1]]
+	xa = [a[0] - x[0], a[1] - x[1]]
+	xy_perp = [xy[1], -xy[0]]
+	return (xo[0]*xy_perp[0] + xo[1]*xy_perp[1]) * (xa[0]*xy_perp[0] + xa[1]*xy_perp[1]) >= 0
+end
+
+def create_dimension(o, x, y, howFarAwayFromEdge)
+	o = Geom::Point3d.new(o[0], o[1], 0)
+	x = Geom::Point3d.new(x[0], x[1], 0)
+	y = Geom::Point3d.new(y[0], y[1], 0)
+	xy = y - x
+	xy_perp = [xy[1], -xy[0], 0]
+	if on_same_side_of_line_segment?(o, x, y, x + xy_perp)
+		xy_perp = [-xy_perp[0], -xy_perp[1], 0]
+	end
+	xy_perp = Geom::Vector3d.new(xy_perp[0], xy_perp[1], 0)
+	xy_perp.normalize!
+	xy_perp.x = xy_perp.x * howFarAwayFromEdge
+	xy_perp.y = xy_perp.y * howFarAwayFromEdge
+	Sketchup.active_model.entities.add_dimension_linear(x, y, xy_perp)
+end
+
+def add_dimension_lines()
+	ee = Sketchup.active_model.entities.find_all { |x| x.is_a?(Sketchup::Edge) }
+
+	ee.map! { |e| [[e.start.position.x, e.start.position.y], [e.end.position.x, e.end.position.y]] }
+
+	pool = []
+	put_in_pool = lambda do |x|
+		poolOverlapping = []
+		poolNotOverlapping = []
+		pool.each { |y|
+			o = combine_if_overlapping(x, y)
+			if o then poolOverlapping.push(y) else poolNotOverlapping.push(y) end
+		}
+		pool = poolNotOverlapping
+		new_kid = poolOverlapping.inject(x) { |accum, y| combine_if_overlapping(accum, y) }
+		pool.push(new_kid)		
+	end
+	ee.each { |e| put_in_pool.call(e) }
+
+	midX = (pool.map {|x| x[0][0]}).concat(pool.map {|x| x[1][0]}).minmax.inject(:+)/2
+	midY = (pool.map {|x| x[0][1]}).concat(pool.map {|x| x[1][1]}).minmax.inject(:+)/2
+	mid = [midX, midY]
+
+	pool.each {|x|
+		outter = pool.all? {|y|
+			on_same_side_of_line_segment?(mid, x[0], x[1], y[0]) && on_same_side_of_line_segment?(mid, x[0], x[1], y[1])
+		}
+		if outter
+			create_dimension(mid, x[0], x[1], 5 * 12)
+		end
+	}
+end
+
 def convert_dimensions_to_just_feet()
 	xx = Sketchup.active_model.entities.find_all { |x| x.is_a?(Sketchup::DimensionLinear) }
 	xx.each { |x|
@@ -16,6 +115,8 @@ def convert_dimensions_to_just_feet()
 		x.has_aligned_text = true
 	}
 end
+
+###############################################################
 
 def get_layer_faces(layer_name)
 	y = []
@@ -101,7 +202,9 @@ def get_north()
 	return Math.atan2(x[1] - o[1], x[0] - o[0])
 end
 
-def get_file_base64()
+def post_to_firebase(homeKey)
+	h = {}
+
 	m = Sketchup.active_model
 	begin
 		m.save_copy 'delete_me.skp'
@@ -110,12 +213,11 @@ def get_file_base64()
 		m.save_copy 'delete_me.skp'
 	end
 	x = IO.binread('delete_me.skp')
-	return Base64.encode64(x)
-end
+	x = Base64.encode64(x)
+	h['skp'] = x
 
-def render_to_data_url(width)
 	v = Sketchup.active_model.active_view
-	vw = width
+	vw = 1000
 	vh = (vw/(v.vpwidth.to_f/v.vpheight)).round
 	v.write_image({
 		:filename => 'delete_me.png',
@@ -125,29 +227,19 @@ def render_to_data_url(width)
 	x = IO.binread('delete_me.png')
 	x = Base64.encode64(x)
 	x.gsub!("\n", '')
-	return 'data:image/png;base64,' + x
-end
+	x = 'data:image/png;base64,' + x
+	h['img'] = x
 
-def calc_scale(width)
-	v = Sketchup.active_model.active_view
-	vw = width
-	vh = (vw/(v.vpwidth.to_f/v.vpheight)).round
 	c = v.camera
 	tau = 2*Math::PI
 	if not c.perspective?
-		return c.height / vh
+		h['scale (in per px)'] = c.height / vh
 	elsif c.fov_is_height?
-		return (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vh/2)
+		h['scale (in per px)'] = (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vh/2)
 	else
-		return (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vw/2)
+		h['scale (in per px)'] = (Math.tan((c.fov/360*tau)/2) * c.eye.z) / (vw/2)
 	end
-end
 
-def gather_ezhome_data()
-	h = {}
-	h['skp'] = get_file_base64()
-	h['img'] = render_to_data_url(1000)
-	h['scale (in per px)'] = calc_scale(1000)
 	h['time'] = Time.now.to_f * 1000
 	h['lot (in^2)'] = layer_area_xy('lot')
 	h['soft (in^2)'] = layer_area_xy('soft')
@@ -159,26 +251,21 @@ def gather_ezhome_data()
 	h['blawn (in)'] = layer_perimeter_xy('blawn')
 	h['building (in^2)'] = layer_area_xy('building')
 	h['north'] = get_north()
-	return h
-end
 
-def post_to_firebase(homeKey)
 	https = Net::HTTP.new($ezhomeFirebaseName + '.firebaseio.com', 443)
 	https.use_ssl = true
 	https.verify_mode = OpenSSL::SSL::VERIFY_NONE
-	https.send_request('PATCH', '/home/' + URI.escape(homeKey) + '/.json', JSON.generate(gather_ezhome_data()))
+	https.send_request('PATCH', '/home/' + URI.escape(homeKey) + '/.json', JSON.generate(h))
+	p 'posted'
 end
 
 UI.add_context_menu_handler do |context_menu|
 	context_menu.add_item("ezhome plugin") {
-		d = UI::WebDialog.new("ezhome plugin", false, "ezhome plugin", 600, 600, 0, 0, true)
-		d.add_action_callback("slurp") do |web_dialog, action_name|
-			web_dialog.execute_script('ezhome_slurp_callback(' + JSON.generate(gather_ezhome_data()) + ')')
-		end
-		d.add_action_callback("upload") do |web_dialog, action_name|
+		d = UI::WebDialog.new("ezhome plugin", false, "ezhome plugin", 400, 600, 0, 0, true)
+		d.add_action_callback("ezhome_upload") do |web_dialog, action_name|
 			post_to_firebase(action_name.to_s)
 		end
-		d.add_action_callback("download") do |web_dialog, action_name|
+		d.add_action_callback("ezhome_download") do |web_dialog, action_name|
 			x = 'https://' + $ezhomeFirebaseName + '.firebaseio.com/home/' + URI.escape(action_name) + '/skp.json'
 			x = open(x, { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }).read
 			x = eval(x)
@@ -187,7 +274,7 @@ UI.add_context_menu_handler do |context_menu|
 			File.open(randomName, 'w').write(x)
 			Sketchup.open_file(randomName)
 		end
-		d.add_action_callback("dimensions") do |web_dialog, action_name|
+		d.add_action_callback("ezhome_dimensions") do |web_dialog, action_name|
 			convert_dimensions_to_just_feet
 		end
 		d.set_url('http://dglittle.github.io/ezhome/index.html?sketchup=true')

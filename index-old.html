@@ -162,36 +162,42 @@ function drawBlueprintCanvas(o, w) {
     var scale = (bw/bh > img.width/img.height) ? bh/img.height : bw/img.width
 
     var gridSize = scale * 1/o['scale (in per px)'] * 12 * 5
-    g.beginPath()
     for (var i = 1; i < bh/gridSize; i++) {
-        g.moveTo(m, m + gridSize*i)
-        g.lineTo(w - m, m + gridSize*i)
+        g.beginPath()
+        g.moveTo(m, m + Math.round(gridSize * i) + 0.5)
+        g.lineTo(w - m, m + Math.round(gridSize * i) + 0.5)
+        g.lineWidth = '1px'
+        g.strokeStyle = 'lightgrey'
+        g.stroke()
     }
     for (var i = 1; i < bw/gridSize; i++) {
-        g.moveTo(m + gridSize*i, m)
-        g.lineTo(m + gridSize*i, m + bh)
+        g.beginPath()
+        g.moveTo(m + Math.round(gridSize * i) + 0.5, m)
+        g.lineTo(m + Math.round(gridSize * i) + 0.5, m + bh)
+        g.lineWidth = '1px'
+        g.strokeStyle = 'lightgrey'
+        g.stroke()
     }
-    g.lineWidth = '1px'
-    g.strokeStyle = 'lightgrey'
-    g.stroke()
+
+    return c
 
     function drawRuler(x, y) {
         g.fillStyle = 'black'
-        g.fillRect(x, y, gridSize, gridSize/2)
-        g.fillRect(x + 2*gridSize, y, gridSize, gridSize/2)
-        g.fillRect(x + 4*gridSize, y, gridSize, gridSize/2)
+        g.fillRect(Math.round(x), Math.round(y), Math.round(gridSize + 1), Math.round(gridSize/2))
+        g.fillRect(Math.round(x + 2*gridSize), Math.round(y), Math.round(gridSize + 1), Math.round(gridSize/2))
+        g.fillRect(Math.round(x + 4*gridSize), Math.round(Math.round(y)), Math.round(gridSize), Math.round(gridSize/2))
 
         g.beginPath()
         g.strokeStyle = 'black'
-        g.rect(x, y, 5*gridSize, gridSize/2)
+        g.rect(Math.round(x) + 0.5, Math.round(y) + 0.5, Math.round(5*gridSize), Math.round(gridSize/2))
         g.stroke()
 
-        g.font = gridSize/2 + 'px Arial'
+        g.font = Math.round(gridSize/2) + "px Arial";
         g.textAlign = 'center'
         g.fillText('0 FT', x, y - gridSize*.1)
         g.fillText('25 FT', x + 5*gridSize, y - gridSize*.1)
     }
-    drawRuler(m + gridSize, m + bh - gridSize)
+    drawRuler(gridSize, gridSize * (Math.floor((h - (gridSize/4)) / gridSize) - 1))
 
     function drawCompass(x, y, north) {
         g.beginPath()
@@ -206,7 +212,7 @@ function drawBlueprintCanvas(o, w) {
         g.lineWidth = gridSize/4
         g.stroke()
 
-        g.font = 'bold ' + gridSize/2 + 'px Arial'
+        g.font = 'bold ' + Math.round(gridSize/2) + "px Arial";
         g.translate(x + gridSize*Math.cos(north), y - gridSize*Math.sin(north))
         g.rotate(tau/4 - north)
         g.translate(0, -.1*gridSize)
@@ -214,9 +220,9 @@ function drawBlueprintCanvas(o, w) {
         g.fillText('N', 0, 0)
         g.setTransform(1, 0, 0, 1, 0, 0)
     }
-    drawCompass(w - m - gridSize*2, m + gridSize*2, o.north)
+    drawCompass(w - gridSize*2, gridSize*2, o.north)
 
-    if (bw/bh > img.width/img.height) {
+    if (w/h > img.width/img.height) {
         var x = h/(img.height/img.width)
         g.drawImage(img, w/2 - x/2, 0, x, h)
     } else {
@@ -240,37 +246,21 @@ $(function () {
 
 
         // work here
-        header.append($('<button/>').text('view').click(function () {
+        header.append($('<button/>').text('test4').click(function () {
             window.ezhome_slurp_callback = function (o) {
-                //header.append(drawBlueprintCanvas(o, 400))
-
-                window.bottomPart.empty().append(drawForm(o))
+                header.append(drawBlueprintCanvas(o, 400))
             }
             window.location.href = 'skp:slurp@yup'
         }))
 
 
-        header.append($('<button/>').text('upload').click(function () {
-            var x = prompt('slug:')
-            setTimeout(function () {
-                alert('done uploading!')
-            }, 1000)
-
-            // var homeKey = header.find('input').val()
-            // frame.attr('src', window.location.href.match(/(.*?)\?/)[1] + '?homeKey=' + _.escapeUrl(homeKey))
-            // window.location.href = 'skp:upload@' + homeKey
+        header.append($('<span/>').text('slug: '))
+        header.append($('<input type="text"/>'))
+        header.append($('<button/>').text('update').click(function () {
+            var homeKey = header.find('input').val()
+            frame.attr('src', window.location.href.match(/(.*?)\?/)[1] + '?homeKey=' + _.escapeUrl(homeKey))
+            window.location.href = 'skp:upload@' + homeKey
         }))
-        header.append($('<button/>').text('download').click(function () {
-            // var x = prompt('slug:')
-            // setTimeout(function () {
-            //     alert('done uploading!')
-            // }, 1000)
-
-            // var homeKey = header.find('input').val()
-            // frame.attr('src', window.location.href.match(/(.*?)\?/)[1] + '?homeKey=' + _.escapeUrl(homeKey))
-            // window.location.href = 'skp:upload@' + homeKey
-        }))
-
         // header.append($('<button/>').text('send model to sketchup').click(function () {
         //     var homeKey = header.find('input').val()
         //     window.location.href = 'skp:ezhome_download@' + homeKey
@@ -278,11 +268,11 @@ $(function () {
         // header.append($('<button/>').text('save image').click(function () {
         //     alert('not implemented yet..')
         // }))
-        header.append($('<button/>').text('dimension helper').click(function () {
+        header.append($('<button/>').text('convert dimensions to feet with no inches').click(function () {
             window.location.href = 'skp:dimensions@yup'
         }))
-        window.bottomPart = $('<div style="width:100%;height:100%">')
-        $('body').append(_.splitVert(2, 1, header, window.bottomPart))
+        var frame = $('<iframe frameborder="0" width="100%" height="100%">')
+        $('body').append(_.splitVert(2, 1, header, frame))
     } else if (params.homeKey) {
         var d = $('<div style="width:100%;height:100%"/>')
         $('body').append(d)
