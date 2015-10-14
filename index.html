@@ -156,6 +156,7 @@ $(function () {
     var params = _.getUrlParams()
     if (params.sketchup) {
         var header = $('<div/>')
+        header.append($('<span/>').text('slug: '))
         header.append($('<input type="text"/>'))
         header.append($('<button/>').text('update').click(function () {
             var homeKey = header.find('input').val()
