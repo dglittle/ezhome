@@ -147,13 +147,11 @@ function drawForm(o) {
 }
 
 function drawBlueprintCanvas(o, w) {
-    var h = 4/3 * w
+    var h = 1.20 * w
     var m = 1/16 * w
     var bw = w - 2*m
     var bh = bw
     var lh = h - 2*m - bh
-
-    alert('version 2')
 
     var c = $('<canvas width="' + w + '" height="' + h + '"/>')
     var g = c[0].getContext('2d')
@@ -173,7 +171,7 @@ function drawBlueprintCanvas(o, w) {
         g.moveTo(m + gridSize*i, m)
         g.lineTo(m + gridSize*i, m + bh)
     }
-    g.lineWidth = '1px'
+    g.lineWidth = 1
     g.strokeStyle = 'lightgrey'
     g.stroke()
 
@@ -193,7 +191,7 @@ function drawBlueprintCanvas(o, w) {
         g.fillText('0 FT', x, y - gridSize*.1)
         g.fillText('25 FT', x + 5*gridSize, y - gridSize*.1)
     }
-    // drawRuler(m + gridSize, m + bh - gridSize)
+    drawRuler(m + gridSize, m + bh - gridSize)
 
     function drawCompass(x, y, north) {
         g.beginPath()
@@ -216,20 +214,111 @@ function drawBlueprintCanvas(o, w) {
         g.fillText('N', 0, 0)
         g.setTransform(1, 0, 0, 1, 0, 0)
     }
-    // drawCompass(w - m - gridSize*2, m + gridSize*2, o.north)
+    drawCompass(w - m - gridSize*2, m + gridSize*2, o.north)
 
-    // if (bw/bh > img.width/img.height) {
-    //     var x = bh/(img.height/img.width)
-    //     g.drawImage(img, m + bw/2 - x/2, 0, x, bh)
-    // } else {
-    //     var x = bw/(img.width/img.height)
-    //     g.drawImage(img, 0, bh/2 - x/2, bw, x)
-    // }
+    if (bw/bh > img.width/img.height) {
+        var x = bh/(img.height/img.width)
+        g.drawImage(img, m + bw/2 - x/2, 0, x, bh)
+    } else {
+        var x = bw/(img.width/img.height)
+        g.drawImage(img, 0, bh/2 - x/2, bw, x)
+    }
+
+    g.beginPath()
+    g.rect(m, m, w - 2*m, h - 2*m)
+    g.moveTo(m, m + bh)
+    g.lineTo(w - m, m + bh)
+    g.lineWidth = 1
+    g.strokeStyle = 'black'
+    g.stroke()
+
+    function drawLegend() {
+        var llh = lh / 8
+        g.beginPath()
+
+        for (var i = 1; i < 6; i++) {
+            g.moveTo(m, m + bh + i*llh)
+            g.lineTo(w - m, m + bh + i*llh)
+        }
+
+        g.moveTo(m, h - m - 2*llh)
+        g.lineTo(m + bw/3, h - m - 2*llh)
+        g.moveTo(m, h - m - 1*llh)
+        g.lineTo(m + bw/3, h - m - 1*llh)
+
+        g.moveTo(w - m - bw/3, h - m - 2*llh)
+        g.lineTo(w - m, h - m - 2*llh)
+
+        g.moveTo(m + bw/3, h - m - 3*llh)
+        g.lineTo(m + bw/3, h - m)
+
+        g.moveTo(w - m - bw/3, h - m - 3*llh)
+        g.lineTo(w - m - bw/3, h - m)
+
+        g.moveTo(w/2, h - m - lh)
+        g.lineTo(w/2, h - m - 3*llh)
+
+        g.lineWidth = 1
+        g.strokeStyle = 'black'
+        g.stroke()
+
+        g.font = llh + 'px Arial'
+        g.textBaseline = 'middle'
+
+        var x = _.pairs({
+            'LOT AREA' : Math.round(o['lot (in^2)']/144) + ' SF',
+            'LOT AREA FROM ZILLOW' : 'XXX',
+            'BUILDING AREA' : Math.round(o['building (in^2)']/144) + ' SF',
+            'POOL AREA' : Math.round(o['pool (in^2)']/144) + ' SF',
+            'HARD AREA' : Math.round(o['hard (in^2)']/144) + ' SF',
+        })
+        _.each(x, function (x, i) {
+            g.textAlign = 'start'
+            g.fillText(' ' + x[0], m, m + bh + i*llh + llh/2)
+            g.textAlign = 'end'
+            g.fillText(x[1] + ' ', w/2, m + bh + i*llh + llh/2)
+        })
+
+        var x = _.pairs({
+            'SOFT AREA' : Math.round(o['soft (in^2)']/144) + ' SF',
+            'F-LAWN AREA' : Math.round(o['flawn (in^2)']/144) + ' SF',
+            'F-LAWN PERIMETER' : Math.round(o['flawn (in)']/12) + ' F',
+            'B-LAWN AREA' : Math.round(o['blawn (in^2)']/144) + ' SF',
+            'B-LAWN PERIMETER' : Math.round(o['blawn (in)']/12) + ' F'
+        })
+        _.each(x, function (x, i) {
+            g.textAlign = 'start'
+            g.fillText(' ' + x[0], w/2, m + bh + i*llh + llh/2)
+            g.textAlign = 'end'
+            g.fillText(x[1] + ' ', w - m, m + bh + i*llh + llh/2)
+        })
+
+        g.textAlign = 'start'
+        g.fillText(' Client Name:', m, m + bh + 5*llh + llh/2)
+        g.fillText(' Phone:', m, m + bh + 6*llh + llh/2)
+        g.fillText(' E-mail:', m, m + bh + 7*llh + llh/2)
+
+        g.fillText(' Drawn by', w - m - bw/3, m + bh + 5*llh + llh/2)
+
+
+
+
+        // work here
+        // <img style="width:200px" src="ezhome.png" />        
+    }
+    drawLegend()
+
+    c.css('border', '1px solid green')
 
     return c
 }
 
 $(function () {
+
+    $('body').append('UNDER CONSTRUCTION -- should be up within 24 hours')
+    return
+
+
     $('head').append($('<style> html { height: 100%; box-sizing: border-box; } *, *:before, *:after { box-sizing: inherit; } body { height: 100%; margin: 0px } table { border-collapse: collapse; } th, td { padding: 0px; } </style>'))
     
     $(document).ajaxError(function () {
@@ -239,6 +328,8 @@ $(function () {
     var params = _.getUrlParams()
     if (params.sketchup) {
         var header = $('<div/>')
+
+        header.append($('<span/>').text('version 24'))
 
         // work here
         header.append($('<button/>').text('view').click(function () {
@@ -261,6 +352,14 @@ $(function () {
             // window.location.href = 'skp:upload@' + homeKey
         }))
         header.append($('<button/>').text('download').click(function () {
+
+
+            window.ezhome_slurp_callback = function (o) {
+                window.bottomPart.empty().append(drawBlueprintCanvas(o, 400))
+            }
+            window.location.href = 'skp:slurp@yup'
+
+
             // var x = prompt('slug:')
             // setTimeout(function () {
             //     alert('done uploading!')
