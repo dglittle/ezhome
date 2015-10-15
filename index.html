@@ -239,6 +239,24 @@ $(function () {
             alert('please press "view" first, and then "upload"')
             return
         }
+
+
+
+        // work here
+        try {
+            var c = drawBlueprint(g_blueprint_info.hash, 1000, g_blueprint_info.blueprint_img, g_blueprint_info.ezhome_logo)
+            var s = c[0].toDataURL()
+
+            alert('got here!!!: s=' + s.slice(0, 100))
+        } catch (e) {
+            alert('c = ' + typeof(c))
+            alert('c = ' + c.toDataURL)
+            alert('e = ' + e)
+        }
+        return
+
+
+
         var slug = prompt('slug:')
         if (slug) {
             var fb = new Firebase('https://' + ezhomeFirebaseName + '.firebaseio.com/home/' + _.escapeUrl(slug))

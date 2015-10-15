@@ -170,8 +170,8 @@ def post_to_firebase(homeKey)
 end
 
 UI.add_context_menu_handler do |context_menu|
-	context_menu.add_item("ezhome plugin") {
-		d = UI::WebDialog.new("ezhome plugin", false, "ezhome plugin", 600, 600, 0, 0, true)
+	context_menu.add_item("ezez") {
+		d = UI::WebDialog.new("ezez", false, "ezez", 600, 600, 0, 0, true)
 		d.add_action_callback("slurp") do |web_dialog, action_name|
 			web_dialog.execute_script('ezhome_slurp_callback(' + JSON.generate(gather_ezhome_data()) + ')')
 		end
