@@ -270,6 +270,7 @@ $(function () {
             try {
                 alert('checkpoint A')
                 updateBlueprint(o)
+                alert('checkpoint Z')
                 alert('checkpoint 25?: ' + _.keys(o).join(','))
             } catch (e) {
                 alert('e = ' + e + ' :: ' + e.stack)
