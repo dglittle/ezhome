@@ -236,10 +236,10 @@ $(function () {
     }))
     header.append($('<button/>').text('view').click(function () {
         window.ezhome_slurp_callback = function (o) {
-            alert('checkpoint 23!')
+            alert('checkpoint 24!')
             try {
                 updateBlueprint(o)
-                alert('checkpoint 24?: ' + _.keys(o).join(','))
+                alert('checkpoint 25?: ' + _.keys(o).join(','))
             } catch (e) {
                 alert('e = ' + e)
             }
