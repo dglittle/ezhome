@@ -191,7 +191,7 @@ UI.add_context_menu_handler do |context_menu|
 			p 'dimension button clicked'
 			convert_dimensions_to_just_feet
 		end
-		d.set_url('http://dglittle.github.io/ezhome/index.html?sketchup=true')
+		d.set_url('http://dglittle.github.io/ezhome/index.html')
 		d.show()
 	}
 end
