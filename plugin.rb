@@ -144,21 +144,31 @@ def calc_scale(width)
 end
 
 def gather_ezhome_data()
+	# work here
+	p 'checkpoint 2'
 	h = {}
 	h['skp'] = get_file_base64()
+	p 'checkpoint 3'
 	h['img'] = render_to_data_url(1000)
+	p 'checkpoint 4'
 	h['scale (in per px)'] = calc_scale(1000)
+	p 'checkpoint 5'
 	h['time'] = Time.now.to_f * 1000
+	p 'checkpoint 6'
 	h['lot (in^2)'] = layer_area_xy('lot')
+	p 'checkpoint 7'
 	h['soft (in^2)'] = layer_area_xy('soft')
 	h['hard (in^2)'] = layer_area_xy('hard')
 	h['pool (in^2)'] = layer_area_xy('pool')
 	h['flawn (in^2)'] = layer_area_xy('flawn')
+	p 'checkpoint 8'
 	h['flawn (in)'] = layer_perimeter_xy('flawn')
+	p 'checkpoint 9'
 	h['blawn (in^2)'] = layer_area_xy('blawn')
 	h['blawn (in)'] = layer_perimeter_xy('blawn')
 	h['building (in^2)'] = layer_area_xy('building')
 	h['north'] = get_north()
+	p 'checkpoint 10'
 	return h
 end
 
@@ -173,7 +183,10 @@ UI.add_context_menu_handler do |context_menu|
 	context_menu.add_item("ezez") {
 		d = UI::WebDialog.new("ezez", false, "ezez", 600, 600, 0, 0, true)
 		d.add_action_callback("slurp") do |web_dialog, action_name|
+			# work here
+			p 'checkpoint 1'
 			web_dialog.execute_script('ezhome_slurp_callback(' + JSON.generate(gather_ezhome_data()) + ')')
+			p 'checkpoint 11'
 		end
 		d.add_action_callback("upload") do |web_dialog, action_name|
 			post_to_firebase(action_name.to_s)
