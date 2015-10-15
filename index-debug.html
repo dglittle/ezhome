@@ -236,7 +236,7 @@ $(function () {
     }))
     header.append($('<button/>').text('view').click(function () {
         window.ezhome_slurp_callback = function (o) {
-            alert('got data back from sketchup: ' + (o && _.keys(o).length))
+            alert('checkpoint 23!')
             try {
                 updateBlueprint(o)
             } catch (e) {
