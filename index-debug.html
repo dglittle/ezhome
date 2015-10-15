@@ -241,7 +241,7 @@ $(function () {
                 updateBlueprint(o)
                 alert('checkpoint 25?: ' + _.keys(o).join(','))
             } catch (e) {
-                alert('e = ' + e)
+                alert('e = ' + e + ' :: ' + e.stack)
             }
         }
         window.location.href = 'skp:slurp@yup'
