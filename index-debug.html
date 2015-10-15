@@ -237,7 +237,11 @@ $(function () {
     header.append($('<button/>').text('view').click(function () {
         window.ezhome_slurp_callback = function (o) {
             alert('got data back from sketchup: ' + (o && _.keys(o).length))
-            updateBlueprint(o)
+            try {
+                updateBlueprint(o)
+            } catch (e) {
+                alert('e = ' + e)
+            }
         }
         window.location.href = 'skp:slurp@yup'
     }))
