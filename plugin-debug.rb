@@ -182,6 +182,14 @@ end
 UI.add_context_menu_handler do |context_menu|
 	context_menu.add_item("ezez-debug") {
 		d = UI::WebDialog.new("ezez-debug", false, "ezez-debug", 600, 600, 0, 0, true)
+		d.add_action_callback("test") do |web_dialog, action_name|
+			p 'checkpoint 1'
+			web_dialog.execute_script('test_callback()')
+			p 'checkpoint 3'
+		end
+
+		test_callback
+
 		d.add_action_callback("slurp") do |web_dialog, action_name|
 			# work here
 			p 'checkpoint 1'

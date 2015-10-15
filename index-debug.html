@@ -228,6 +228,12 @@ $(function () {
     })
 
     var header = $('<div/>')
+    header.append($('<button/>').text('test').click(function () {
+        window.test_callback = function (o) {
+            alert('checkpoint 2')
+        }
+        window.location.href = 'skp:test@yup'
+    }))
     header.append($('<button/>').text('view').click(function () {
         window.ezhome_slurp_callback = function (o) {
             alert('got data back from sketchup: ' + (o && _.keys(o).length))
