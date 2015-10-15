@@ -205,34 +205,42 @@ g_blueprint_info = {
     ezhome_logo : null
 }
 function updateBlueprint(hash) {
+    alert('checkpoint A.1')
     window.bottomPart.empty().append($('<div/>').text('press "view" to see something here..'))
+    alert('checkpoint A.2')
 
     if (hash) {
         g_blueprint_info.hash = hash
         g_blueprint_info.blueprint_img = new Image()
         g_blueprint_info.blueprint_img.src = hash.img
     }
+    alert('checkpoint A.3')
     if (!g_blueprint_info.ezhome_logo) {
         g_blueprint_info.ezhome_logo = new Image()
         g_blueprint_info.ezhome_logo.src = 'ezhome.png'
     }
+    alert('checkpoint A.4')
     if (!g_blueprint_info.hash) return
 
+    alert('checkpoint A.5')
     if (!isImageLoaded(g_blueprint_info.blueprint_img)) {
         g_blueprint_info.blueprint_img.onload = function () { updateBlueprint() }
         return
     }
+    alert('checkpoint A.6')
     if (!isImageLoaded(g_blueprint_info.ezhome_logo)) {
         g_blueprint_info.ezhome_logo.onload = function () { updateBlueprint() }
         return
     }
+    alert('checkpoint A.7')
 
+    alert('checkpoint A.8')
     var h = $(window).height() - window.topPart.height()
     var w = h/1.2
     if (w > $(window).width()) {
         w = $(window).width()
     }
-    alert('checkpoint AA')
+    alert('checkpoint A.9')
     window.bottomPart.empty().append(drawBlueprint(g_blueprint_info.hash, w, g_blueprint_info.blueprint_img, g_blueprint_info.ezhome_logo))
 }
 
