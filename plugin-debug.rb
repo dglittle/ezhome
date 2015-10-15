@@ -187,9 +187,6 @@ UI.add_context_menu_handler do |context_menu|
 			web_dialog.execute_script('test_callback()')
 			p 'checkpoint 3'
 		end
-
-		test_callback
-
 		d.add_action_callback("slurp") do |web_dialog, action_name|
 			# work here
 			p 'checkpoint 1'
