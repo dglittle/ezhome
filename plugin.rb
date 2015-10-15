@@ -188,7 +188,6 @@ UI.add_context_menu_handler do |context_menu|
 			Sketchup.open_file(randomName)
 		end
 		d.add_action_callback("dimensions") do |web_dialog, action_name|
-			p 'dimension button clicked'
 			convert_dimensions_to_just_feet
 		end
 		d.set_url('http://dglittle.github.io/ezhome/index.html')
