@@ -230,7 +230,7 @@ $(function () {
     var header = $('<div/>')
     header.append($('<button/>').text('test').click(function () {
         window.test_callback = function (o) {
-            alert('checkpoint 2')
+            alert('checkpoint 2: ' + _.json(o, true))
         }
         window.location.href = 'skp:test@yup'
     }))

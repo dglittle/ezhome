@@ -184,7 +184,8 @@ UI.add_context_menu_handler do |context_menu|
 		d = UI::WebDialog.new("ezez-debug", false, "ezez-debug", 600, 600, 0, 0, true)
 		d.add_action_callback("test") do |web_dialog, action_name|
 			p 'checkpoint 1'
-			web_dialog.execute_script('test_callback()')
+			x = JSON.generate(gather_ezhome_data())
+			web_dialog.execute_script('test_callback("hello hello")')
 			p 'checkpoint 3'
 		end
 		d.add_action_callback("slurp") do |web_dialog, action_name|
