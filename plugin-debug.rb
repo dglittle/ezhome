@@ -185,7 +185,7 @@ UI.add_context_menu_handler do |context_menu|
 		d.add_action_callback("test") do |web_dialog, action_name|
 			p 'checkpoint 1'
 			x = JSON.generate(gather_ezhome_data())
-			web_dialog.execute_script('test_callback("hello hello")')
+			web_dialog.execute_script('test_callback(' + x.length.to_s + ')')
 			p 'checkpoint 3'
 		end
 		d.add_action_callback("slurp") do |web_dialog, action_name|
