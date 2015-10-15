@@ -194,7 +194,12 @@ function drawBlueprint(o, w, blueprint_img, ezhome_logo) {
 
 // from: http://stackoverflow.com/questions/1977871/check-if-an-image-is-loaded-no-errors-in-javascript
 function isImageLoaded(img) {
+    alert('checkpoint A.551')
+
     if (!img.complete) return false
+    alert('checkpoint A.552')
+    alert('checkpoint A.553: ' + typeof(img))
+    alert('checkpoint A.554: ' + typeof(img.naturalWidth))
     if (typeof img.naturalWidth !== "undefined" && img.naturalWidth === 0) return false
     return true
 }
@@ -224,6 +229,7 @@ function updateBlueprint(hash) {
 
     alert('checkpoint A.5')
     if (!isImageLoaded(g_blueprint_info.blueprint_img)) {
+        alert('checkpoint A.55')
         g_blueprint_info.blueprint_img.onload = function () { updateBlueprint() }
         return
     }
