@@ -36,7 +36,7 @@ $(function () {
                 var x = 'ERROR: ' + e
             }
             if (typeof(x) == 'object') x = _.json(x, true)
-            output.set(x)
+            output.set(x || 'NOTHING')
         }
     })
 
