@@ -31,6 +31,7 @@ $(function () {
         if (o) {
             input.set('')
             try {
+                $('body').append($('<div/>').text('command: ' + o))
                 var x = eval(o)
             } catch (e) {
                 var x = 'ERROR: ' + e
