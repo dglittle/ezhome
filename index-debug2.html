@@ -21,28 +21,25 @@ $(function () {
         console.log('oh no, AJAX badness happened!')
     })
 
-    var id = _.randomString(10)
-    var fb = new Firebase('https://ezhome.firebaseio.com/debug/' + id)
-    fb.child('here').set(true)
-    var input = fb.child('input')
-    var output = fb.child('output')
-    input.on('value', function (o) {
-        o = o.val()
-        if (o) {
-            input.set('')
-            try {
-                $('body').append($('<div/>').text('command: ' + o))
-                var x = eval(o)
-            } catch (e) {
-                var x = 'ERROR: ' + e
-            }
-            if (typeof(x) == 'object') x = _.json(x, true)
-            output.set(x || 'NOTHING')
+    var key = _.getUrlParams().key
+
+    var input = $('<textarea style="width:100%;height:100%"/>')
+    var output = $('<textarea style="width:100%;height:100%"/>')
+    $('body').append(_.splitHorz(.5, .5, input, output))
+
+    function go() {
+        new Firebase('https://ezhome.firebaseio.com/debug/' + key + '/input').set(input.val())
+    }
+    $(document).keydown(function (e) {
+        if (e.keyCode == 13 && e.metaKey) {
+            e.preventDefault()
+            go()
         }
     })
 
-    $('body').append($('<div/>').text('hello! debugging.. version 3'))
-    $('body').append($('<textarea id="ruby"/>'))
+    new Firebase('https://ezhome.firebaseio.com/debug/' + key + '/output').on('value', function (o) {
+        output.val(o.val())
+    })
 })
 
 </script>
