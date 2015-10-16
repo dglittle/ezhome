@@ -23,6 +23,7 @@ $(function () {
 
     var id = _.randomString(10)
     var fb = new Firebase('https://ezhome.firebaseio.com/debug/' + id)
+    fb.child('here').set(true)
     var input = fb.child('input')
     var output = fb.child('output')
     input.on('value', function (o) {
