@@ -30,7 +30,11 @@ $(function () {
         o = o.val()
         if (o) {
             input.set('')
-            var x = eval(o)
+            try {
+                var x = eval(o)
+            } catch (e) {
+                var x = 'ERROR: ' + e
+            }
             if (typeof(x) == 'object') x = _.json(x, true)
             output.set(x)
         }
