@@ -29,6 +29,7 @@ $(function () {
     input.on('value', function (o) {
         o = o.val()
         if (o) {
+            input.set('')
             var x = eval(o)
             if (typeof(x) == 'object') x = _.json(x, true)
             output.set(x)
