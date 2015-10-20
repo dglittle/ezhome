@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>untitled</title>
+<meta name="viewport" content="width=device-width, user-scalable=no">
+</head>
+<body>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="http://dglittle.github.io/gl519/index.js"></script>
+<style>
+
+</style>
+<script>
+
+function calcWeeklyPrice(input) {
+    hard_area = 0
+    soft_area = 0
+    mulched_area = 0
+    zip = "91789"
+
+    front_lawn = 0
+    back_lawn = 0
+
+    front_lawn_perimeter = 0
+    back_lawn_perimeter = 0
+
+    // Raking hardscape
+        IG_B3 = "NO"
+
+    // Raking softscape
+        IG_B4 = "NO"
+
+    // Organic weed removal
+        IG_B9 = "NO"
+
+    // Picking up pet waste
+        IG_B6 = "NO"
+
+    // Skim pool or another water feature
+        IG_B7 = "NO"
+
+    // Organic fertilizer and spray
+        IG_B8 = "NO"
+
+    eval(input)
+
+    lawn = front_lawn + back_lawn
+    lawn_perimeter = front_lawn_perimeter + back_lawn_perimeter
+
+    // mowing lawn
+        AC_J2 = lawn
+        AC_D2 = 4.5 // setup time
+        AC_F2 = 1/180 // speed
+        AC_H2 = 44 // weekly visits per year
+        AC_N2 = AC_J2>0 ? (AC_D2+AC_F2*AC_J2)*AC_H2/52 : 0
+    // edging lawn
+        AC_J3 = lawn_perimeter
+        AC_D3 = 0 // setup time
+        AC_F3 = 1/45 // speed
+        AC_H3 = 22 // weekly visits per year
+        AC_N3 = AC_J3>0 ? (AC_D3+AC_F3*AC_J3)*AC_H3/52 : 0
+    OS_B26 = AC_N2 + AC_N3
+
+    // blowing hardscape
+        AC_J4 = IG_B3 == "NO" ? hard_area : 0
+        AC_D4 = 2 // setup time
+        AC_F4 = 0.0055 // speed
+        AC_H4 = 52 // weekly visits per year
+        AC_N4 = AC_J4>0 ? (AC_D4+AC_F4*AC_J4)*AC_H4/52 : 0
+    // blowing softscape
+        AC_J5 = IG_B4 == "NO" ? soft_area : 0
+        AC_D5 = 2 // setup time
+        AC_F5 = 0.0065 // speed
+        AC_H5 = 52 // weekly visits per year
+        AC_N5 = AC_J5>0 ? (AC_D5+AC_F5*AC_J5)*AC_H5/52 : 0
+
+        IG_B5 = "Palo Alto: 94301, 94302, 94303, 94304, 94306, 94309 Los Altos: 94022, 94023, 94024 Los Gatos: 95030, 95031, 95032, 95033".indexOf(zip) >= 0 ? "YES" : "NO"
+        GA_B5 = 50/100 // electric blower surcharge
+    OS_B27 = (AC_N4 + AC_N5) * (IG_B5 == "YES" ? 1+GA_B5 : 1)
+
+    // raking hardscape
+        AC_J6 = IG_B3 == "YES" ? hard_area : 0
+        AC_D6 = 0 // setup time
+        AC_F6 = 0.02 // speed
+        AC_H6 = 52 // weekly visits per year
+        AC_N6 = AC_J6>0 ? (AC_D6+AC_F6*AC_J6)*AC_H6/52 : 0
+    // raking softscape
+        AC_J7 = IG_B4 == "YES" ? soft_area : 0
+        AC_D7 = 0 // setup time
+        AC_F7 = 0.03 // speed
+        AC_H7 = 52 // weekly visits per year
+        AC_N7 = AC_J7>0 ? (AC_D7+AC_F7*AC_J7)*AC_H7/52 : 0
+    OS_B28 = AC_N6 + AC_N7
+
+    // hand weeding lawn
+        AC_J13 = IG_B9 == "YES" ? lawn : 0
+        AC_D13 = 0 // setup time
+        AC_F13 = 0.006 // speed
+        AC_H13 = 52 // weekly visits per year
+        AC_N13 = AC_J13>0 ? (AC_D13+AC_F13*AC_J13)*AC_H13/52 : 0
+    // hand weeding hardscape
+        AC_J4 = IG_B3 == "NO" ? hard_area : 0
+        AC_J14 = IG_B9 == "YES" ? AC_J4*0.25 : 0
+        AC_D14 = 0 // setup time
+        AC_F14 = 0.006 // speed
+        AC_H14 = 52 // weekly visits per year
+        AC_N14 = AC_J14>0 ? (AC_D14+AC_F14*AC_J14)*AC_H14/52 : 0
+    // hand weeding softscape bair soil
+        AC_J15 = IG_B9 == "YES" ? soft_area - mulched_area : 0
+        AC_D15 = 0 // setup time
+        AC_F15 = 0.006 // speed
+        AC_H15 = 52 // weekly visits per year
+        AC_N15 = AC_J15>0 ? (AC_D15+AC_F15*AC_J15)*AC_H15/52 : 0
+    // hand weeding softscape mulched area
+        AC_J16 = IG_B9 == "YES" ? mulched_area : 0
+        AC_D16 = 0 // setup time
+        AC_F16 = 0.002 // speed
+        AC_H16 = 52 // weekly visits per year
+        AC_N16 = AC_J16>0 ? (AC_D16+AC_F16*AC_J16)*AC_H16/52 : 0
+    OS_B29 = AC_N13 + AC_N14 + AC_N15 + AC_N16
+
+    GA_B12 = 33 // Maintenance labor rate
+
+    // spray and fertilization
+        AC_J8 = lawn
+        AC_D8 = 8 // setup time
+        AC_F8 = 0.0056 // speed
+        AC_H8 = 4 // weekly visits per year
+        AC_N8 = AC_J8>0 ? (AC_D8+AC_F8*AC_J8)*AC_H8/52 : 0
+    // spraying hardscape roundup
+        AC_J9 = hard_area * 0.25
+        AC_D9 = 6 // setup time
+        AC_F9 = 0.01 // speed
+        AC_H9 = 2 // weekly visits per year
+        AC_N9 = AC_J9>0 ? (AC_D9+AC_F9*AC_J9)*AC_H9/52 : 0
+    // spraying softscape roundup
+        AC_J10 = soft_area
+        AC_D10 = 0 // setup time
+        AC_F10 = 0.01 // speed
+        AC_H10 = 2 // weekly visits per year
+        AC_N10 = AC_J10>0 ? (AC_D10+AC_F10*AC_J10)*AC_H10/52 : 0
+    OS_B46 = AC_N8*52/AC_H8 + (AC_N9 + AC_N10)*52/AC_H9
+    OS_B61 = OS_B46
+
+    // Pruning labor rate
+        GA_B13 = 45
+
+    // Assumption for hedging for Essentials
+        GA_B11 = 6/100
+
+    // Picking up pet waste
+        GA_B6 = 5
+        OS_B5 = IG_B6 == "YES" ? GA_B6 : 0
+
+    // Skim pool or another water feature
+        GA_B7 = 5
+        OS_B6 = IG_B7 == "YES" ? GA_B7 : 0
+
+    // Organic fertilizer and spray
+        GA_B8 = 2
+        OS_B7 = IG_B8 == "YES" ? GA_B8 : 0
+
+    // Minimum weekly price
+        GA_B2 = 24 
+
+    var result = Math.max(
+        (
+            (OS_B26 + OS_B27 + OS_B28 + OS_B29)/60 * GA_B12 + 
+            (OS_B46 + OS_B61)/60/52 * GA_B13
+        ) * (GA_B11 + 1) +
+        (OS_B5 + OS_B6 + OS_B7),
+        GA_B2)
+    return result
+}
+
+$(function () {
+    $('head').append($('<style> html { height: 100%; box-sizing: border-box; } *, *:before, *:after { box-sizing: inherit; } body { height: 100%; margin: 0px } table { border-collapse: collapse; } th, td { padding: 0px; } </style>'))
+    
+    $(document).ajaxError(function () {
+        console.log('oh no, AJAX badness happened!')
+    })
+
+    var input = $('<textarea style="width:100%;height:100%"/>').val("zip=\"94023\"\n\nhard_area = 10000\nsoft_area = 33333\n\nfront_lawn = 20000\nback_lawn = 30000\n\nfront_lawn_perimeter = 40000\nback_lawn_perimeter = 50000\n\nmulched_area = 11111\n\nIG_B3=\"YES\" // raking hardscape\nIG_B4=\"YES\" // raking softscape\nIG_B9=\"YES\" // organic weed removal\n")
+    var go = $('<button/>').text('go').click(function () {
+        var x = calcWeeklyPrice(input.val())
+        output.val('' + x)
+    })
+    var output = $('<textarea style="width:100%;height:100%"/>')
+    $('body').append(_.splitVert(2, 1, $('<div/>').append(go), _.splitHorz(.5, .5, input, output)))
+})
+
+</script>
+</body>
+</html>
