@@ -171,7 +171,65 @@ function calcWeeklyPrice(input) {
         ) * (GA_B11 + 1) +
         (OS_B5 + OS_B6 + OS_B7),
         GA_B2)
-    return result
+
+    // mowing lawn
+        AC_I2 = 22
+        AC_O2 = AC_J2>0 ? (AC_D2+AC_F2*AC_J2)*AC_I2/26 : 0
+    // edging lawn
+        AC_I3 = 11
+        AC_O3 = AC_J3>0 ? (AC_D3+AC_F3*AC_J3)*AC_I3/26 : 0
+    OS_C26 = (AC_O2 + AC_O3)
+
+    // blowing hardscape
+        AC_I4 = 26
+        AC_O4 = AC_J4>0 ? (AC_D4+AC_F4*AC_J4)*AC_I4/26 : 0
+    // blowing softscape
+        AC_I5 = 26
+        AC_O5 = AC_J5>0 ? (AC_D5+AC_F5*AC_J5)*AC_I5/26 : 0
+    OS_C27 = (AC_O4 + AC_O5) * (IG_B5 == "YES" ? 1+GA_B5 : 1)
+
+    // raking hardscape
+        AC_I6 = 26
+        AC_O6 = AC_J6>0 ? (AC_D6+AC_F6*AC_J6)*AC_I6/26 : 0
+    // raking softscape
+        AC_I7 = 26
+        AC_O7 = AC_J7>0 ? (AC_D7+AC_F7*AC_J7)*AC_I7/26 : 0
+    OS_C28 = (AC_O6 + AC_O7)
+
+    // bi-weekly premium
+        GA_B4 = 26.5/100
+
+    // hand weeding lawn
+        AC_I13 = 52
+        AC_O13 = AC_J13>0 ? (AC_D13+AC_F13*AC_J13)*AC_I13/26 : 0
+    // hand weeding hardscape
+        AC_I14 = 52
+        AC_O14 = AC_J14>0 ? (AC_D14+AC_F14*AC_J14)*AC_I14/26 : 0
+    // hand weeding softscape bair soil
+        AC_I15 = 52
+        AC_O15 = AC_J15>0 ? (AC_D15+AC_F15*AC_J15)*AC_I15/26 : 0
+    // hand weeding softscape mulched area
+        AC_I16 = 52
+        AC_O16 = AC_J16>0 ? (AC_D16+AC_F16*AC_J16)*AC_I16/26 : 0
+    OS_C29 = (AC_O13 + AC_O14 + AC_O15 + AC_O16)
+
+    OS_C5 = IG_B6 == "YES" ? GA_B6 : 0
+    OS_C6 = IG_B7 == "YES" ? GA_B7 : 0
+    OS_C7 = (IG_B8 == "YES" ? GA_B8 : 0)*2
+
+    // Minimum biweekly price
+        GA_B3 = 34
+
+    bi_result = Math.max(
+        (
+            (OS_C26 + OS_C27 + OS_C28)/60 * GA_B12 +
+            (OS_B46 + OS_B61)/60 * GA_B13/26
+        ) * (1 + GA_B4) + 
+        OS_C29/60 * GA_B12 * (GA_B11+1) + 
+        (OS_C5 + OS_C6 + OS_C7),
+        GA_B3)
+
+    return [result, bi_result]
 }
 
 $(function () {
