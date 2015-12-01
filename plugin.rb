@@ -249,9 +249,42 @@ end
 UI.add_context_menu_handler do |context_menu|
 	context_menu.add_item("ezez") {
 		d = UI::WebDialog.new("ezez", false, "ezez", 600, 700, 0, 0, true)
-		d.add_action_callback("view") do |web_dialog, action_name|
+		d.add_action_callback("view") do |web_dialog, auth_token|
 			p 'view...'
-			web_dialog.execute_script('ezhome_view_callback(' + JSON.generate(gather_ezhome_data(false)) + ')')
+			aws = get_from_firebase('aws', auth_token.to_s)
+			img_url = upload_to_s3(aws, render_to_file(800), "image/png", "png", "temporary")
+			house_data = get_sketchup_data()
+			blueprint_data = {}
+			blueprint_data["width"] = 600
+			blueprint_data["bucket"] = "sketchup-blueprints"
+			blueprint_data["name"] = ""
+			blueprint_data["address_line_1"] = ""
+			blueprint_data["address_line_2"] = ""
+			blueprint_data["building_area"] = house_data["building_area_sqft"]
+			blueprint_data["hard_area"] = house_data["hard_area_sqft"]
+			blueprint_data["soft_area"] = house_data["soft_area_sqft"]
+			blueprint_data["pool_area"] = house_data["pool_area_sqft"]
+			blueprint_data["front_lawn_area"] = house_data["front_lawn_area_sqft"]
+			blueprint_data["back_lawn_area"] = house_data["back_lawn_area_sqft"]
+			blueprint_data["front_lawn_perimeter"] = house_data["front_lawn_perimeter_ft"]
+			blueprint_data["back_lawn_perimeter"] = house_data["back_lawn_perimeter_ft"]
+			blueprint_data["total_lot_area"] = house_data["lot_area_sqft"]
+			blueprint_data["house_img_url"] = img_url
+			blueprint_data["house_img_ft_per_pixel"] = house_data["house_img_ft_per_px"]
+			blueprint_data["north_radians_clockwise_from_pointing_to_the_right"] = -house_data["north_radians_counterclockwise_from_right"]
+			blueprint_data["slug"] = "temporary"
+			uri = URI("https://vrbvpsscc5.execute-api.us-west-2.amazonaws.com/v1/blueprint_generator")
+
+			http = Net::HTTP.new(uri.host, uri.port)
+			http.use_ssl = true
+			http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+			req = Net::HTTP::Post.new uri
+			req.body = JSON.generate(blueprint_data)
+
+			res = JSON.parse(http.request(req).body)
+			p res["url"]
+			web_dialog.execute_script('ezhome_view_callback("'+res["url"]+'")')
 		end
 		d.add_action_callback("upload") do |web_dialog, auth_token|
 			p 'upload...'
