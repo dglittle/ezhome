@@ -1,11 +1,16 @@
 
-p 'version 31'
+p 'version 34'
+
+$ezhomeFirebaseName = 'ezh-estimator-dev'
 
 require 'sketchup.rb'
 require 'net/http'
 require 'net/https'
 require 'base64'
 require 'json'
+require 'open-uri'
+require 'digest/hmac'
+require 'digest/md5'
 
 def convert_dimensions_to_just_feet()
 	xx = Sketchup.active_model.entities.find_all { |x| x.is_a?(Sketchup::DimensionLinear) }
@@ -26,11 +31,11 @@ def area_xy(a, b, c)
     y = [c[0] - a[0], c[1] - a[1], 0]
     # x = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
     # y = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]
-    
+
     return 0.5 * Math.sqrt(
         (x[1]*y[2] - x[2]*y[1])**2 +
         (x[2]*y[0] - x[0]*y[2])**2 +
-        (x[0]*y[1] - x[1]*y[0])**2)   
+        (x[0]*y[1] - x[1]*y[0])**2)
 end
 
 def mesh_area_xy(m)
@@ -99,7 +104,7 @@ def get_north()
 	return Math.atan2(x[1] - o[1], x[0] - o[0])
 end
 
-def get_file_base64()
+def get_file()
 	m = Sketchup.active_model
 	begin
 		m.save_copy 'delete_me.skp'
@@ -107,13 +112,17 @@ def get_file_base64()
 		m.save 'untitled_' + random_name() + '.skp'
 		m.save_copy 'delete_me.skp'
 	end
-	x = IO.binread('delete_me.skp')
+	return 'delete_me.skp'
+end
+
+def get_file_base64()
+	x = IO.binread(get_file())
 	x = Base64.encode64(x)
 	x.gsub!("\n", '')
 	return x
 end
 
-def render_to_data_url(width)
+def render_to_file(width)
 	v = Sketchup.active_model.active_view
 	vw = width
 	vh = (vw/(v.vpwidth.to_f/v.vpheight)).round
@@ -122,7 +131,12 @@ def render_to_data_url(width)
 		:width => vw,
 		:height => vh,
 		:transparent => true})
-	x = IO.binread('delete_me.png')
+
+	return 'delete_me.png'
+end
+
+def render_to_data_url(width)
+	x = IO.binread(render_to_file(width))
 	x = Base64.encode64(x)
 	x.gsub!("\n", '')
 	return 'data:image/png;base64,' + x
@@ -143,12 +157,8 @@ def calc_scale(width)
 	end
 end
 
-def gather_ezhome_data(includeSkpFile)
+def get_sketchup_data()
 	h = {}
-	if includeSkpFile then
-		h['skp'] = get_file_base64()
-	end
-	h['house_img'] = render_to_data_url(3000)
 	h['house_img_ft_per_px'] = calc_scale(3000) / 12
 	h['lot_area_sqft'] = layer_area_xy('lot') / 144
 	h['soft_area_sqft'] = layer_area_xy('soft') / 144
@@ -163,24 +173,180 @@ def gather_ezhome_data(includeSkpFile)
 	return h
 end
 
+def gather_ezhome_data(includeSkpFile)
+	h = get_sketchup_data()
+	h['house_img'] = render_to_data_url(3000)
+	if includeSkpFile then
+		h['skp'] = get_file_base64()
+	end
+	return h
+end
+
+def get_from_firebase(path, auth_token)
+	uri = URI('https://' + $ezhomeFirebaseName + '.firebaseio.com/' + path + '.json?auth=' + auth_token)
+	contents = Net::HTTP.get(uri)
+	return JSON.parse(contents)
+end
+
+def upload_to_s3(aws_auth, file, mime, ext, slug)
+	object_path = slug + '/' + Digest::MD5.file(file).hexdigest + '.' + ext
+	object_key = '/sketchup-blueprints/' + object_path
+	date = Time.now
+	auth_signature = "PUT\n" +
+	    "\n" +
+	    mime + "\n" +
+	    date.rfc822 + "\n" +
+	    object_key
+	p auth_signature
+	signature = Digest::HMAC.base64digest(auth_signature, aws_auth["secret"], Digest::SHA1)
+	authorization = "AWS " + aws_auth["key"] + ":" + signature
+
+	uri = URI("http://s3-us-west-2.amazonaws.com" + object_key)
+
+	http = Net::HTTP.new(uri.host, uri.port)
+
+	req = Net::HTTP::Put.new uri
+	req.add_field('Content-Type', mime)
+	req.add_field('Date', date.rfc822)
+	req.add_field('Content-Length', File.size(file))
+	req['Authorization'] = authorization
+	req.body_stream = File.open(file)
+
+	res = http.request(req)
+
+	return "https://s3-us-west-2.amazonaws.com/sketchup-blueprints/" + object_path
+end
+
+def patch_to_firebase(path, auth_token, data)
+	uri = URI('https://' + $ezhomeFirebaseName + '.firebaseio.com/' + path + '.json?auth=' + auth_token)
+
+	http = Net::HTTP.new(uri.host, uri.port)
+	http.use_ssl = true
+	http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+	req = Net::HTTP::Patch.new uri
+	req.body = JSON.generate(data)
+
+	http.request(req)
+end
+
+def generate_random_id
+	$alphabets = "abcdefghijklmnopqrstuvwxyz"
+	r = Random.new
+	result = $alphabets[r.rand($alphabets.length)] + $alphabets[r.rand($alphabets.length)] +
+		$alphabets[r.rand($alphabets.length)] + $alphabets[r.rand($alphabets.length)]
+	return result
+end
+
+def get_price_estimate(front_lawn, back_lawn, front_lawn_perimeter, back_lawn_perimeter, hard_area, soft_area, zip)
+	url = "https://vrbvpsscc5.execute-api.us-west-2.amazonaws.com/v1/essentials-estimator?front_lawn=" + front_lawn.to_s + "&back_lawn=" + back_lawn.to_s +
+		"&front_lawn_perimeter=" + front_lawn_perimeter.to_s + "&back_lawn_perimeter=" + back_lawn_perimeter.to_s + "&hard_area=" + hard_area.to_s + "&soft_area=" + soft_area.to_s +
+		"&zip=" + zip.to_s
+	prices = JSON.parse(open(url).read)
+	return prices
+end
+
 UI.add_context_menu_handler do |context_menu|
 	context_menu.add_item("ezez") {
-		d = UI::WebDialog.new("ezez", false, "ezez", 600, 600, 0, 0, true)
+		d = UI::WebDialog.new("ezez", false, "ezez", 600, 700, 0, 0, true)
 		d.add_action_callback("view") do |web_dialog, action_name|
 			p 'view...'
 			web_dialog.execute_script('ezhome_view_callback(' + JSON.generate(gather_ezhome_data(false)) + ')')
 		end
-		d.add_action_callback("upload") do |web_dialog, action_name|
+		d.add_action_callback("upload") do |web_dialog, auth_token|
 			p 'upload...'
-			web_dialog.execute_script('ezhome_upload_callback(' + JSON.generate(gather_ezhome_data(true)) + ')')
+			slug = UI.inputbox(["CAD Slug"], ["Akhtari,455-SAN-MATEO-DR,94025"], "Please enter the CAD slug")
+			if slug and slug[0] != "" then
+				slug = slug[0]
+				aws = get_from_firebase('aws', auth_token.to_s)
+				data = get_sketchup_data()
+				data["skp_url"] = upload_to_s3(aws, get_file(), "application/vnd.sketchup.skp", "skp", slug)
+				data["house_img_url"] = upload_to_s3(aws, render_to_file(3000), "image/png", "png", slug)
+				data["modified_at"] = Time.now.to_f * 1000
+
+				patch_to_firebase('home/' + slug, auth_token, data)
+
+				house_data = get_from_firebase("home/" + slug, auth_token)
+				prices = get_price_estimate(house_data["front_lawn_area_sqft"], house_data["back_lawn_area_sqft"],
+					house_data["front_lawn_perimeter_ft"], house_data["back_lawn_perimeter_ft"], house_data["hard_area_sqft"],
+					house_data["soft_area_sqft"], house_data["zip"])
+
+				data = {}
+				data["weekly_price"] = prices["weekly"]
+				data["biweekly_price"] = prices["biweekly"]
+
+				if !house_data.has_key?("short_url_id") then
+					short_url_ids = get_from_firebase('short_url_id', auth_token)
+					key = generate_random_id()
+					while (short_url_ids.has_key?(key)) do
+						key = generate_random_id()
+					end
+					short_url_update = {}
+					short_url_update[key] = true
+					patch_to_firebase('short_url_id', auth_token, short_url_update)
+
+					data["short_url_id"] = key
+				end
+
+				name = house_data["first_name"] + " " + house_data["last_name"]
+				if house_data.has_key?("middle_initial") then
+					name = house_data["first_name"] + " " + house_data["middle_initial"] + ". " + house_data["last_name"]
+				end
+
+				blueprint_data = {}
+				blueprint_data["width"] = 3000
+				blueprint_data["bucket"] = "sketchup-blueprints"
+				blueprint_data["name"] = name
+				blueprint_data["address_line_1"] = house_data["address"]
+				blueprint_data["address_line_2"] = house_data["city"] + ". " + house_data["state"] + " " + house_data["zip"]
+				blueprint_data["building_area"] = house_data["building_area_sqft"]
+				blueprint_data["hard_area"] = house_data["hard_area_sqft"]
+				blueprint_data["soft_area"] = house_data["soft_area_sqft"]
+				blueprint_data["pool_area"] = house_data["pool_area_sqft"]
+				blueprint_data["front_lawn_area"] = house_data["front_lawn_area_sqft"]
+				blueprint_data["back_lawn_area"] = house_data["back_lawn_area_sqft"]
+				blueprint_data["front_lawn_perimeter"] = house_data["front_lawn_perimeter_ft"]
+				blueprint_data["back_lawn_perimeter"] = house_data["back_lawn_perimeter_ft"]
+				blueprint_data["total_lot_area"] = house_data["lot_area_sqft"]
+				blueprint_data["house_img_url"] = house_data["house_img_url"]
+				blueprint_data["house_img_ft_per_pixel"] = house_data["house_img_ft_per_px"]
+				blueprint_data["north_radians_clockwise_from_pointing_to_the_right"] = -house_data["north_radians_counterclockwise_from_right"]
+				blueprint_data["slug"] = slug
+
+				uri = URI("https://vrbvpsscc5.execute-api.us-west-2.amazonaws.com/v1/blueprint_generator")
+
+				http = Net::HTTP.new(uri.host, uri.port)
+				http.use_ssl = true
+				http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+				req = Net::HTTP::Post.new uri
+				req.body = JSON.generate(blueprint_data)
+
+				res = JSON.parse(http.request(req).body)
+				data["house_with_legend_img_url"] = res["url"]
+				data["modified_at"] = Time.now.to_f * 1000
+
+				patch_to_firebase('home/' + slug, auth_token, data)
+			end
+
+			web_dialog.execute_script('ezhome_upload_callback()')
 		end
-		d.add_action_callback("download") do |web_dialog, action_name|
+		d.add_action_callback("download") do |web_dialog, auth_token|
 			p 'download...'
-			x = action_name
-			x = open(x, { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }).read
-			randomName = 'untitled_' + random_name() + '.skp'
-			File.open(randomName, 'w').write(x)
-			Sketchup.open_file(randomName)
+			slug = UI.inputbox(["CAD Slug"], ["Aaronson,340-ARBOR-RD,94025"], "Please enter the CAD slug")
+			if slug and slug[0] != "" then
+				house_data = get_from_firebase('home/' + slug[0], auth_token.to_s)
+				if house_data.has_key?("skp_url") then
+					randomName = 'untitled_' + random_name() + '.skp'
+					p house_data["skp_url"]
+					File.open(randomName, 'wb') do |file|
+							file << open(house_data["skp_url"], { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }).read
+					end
+					Sketchup.open_file(randomName)
+				else
+					UI.messagebox("Sketchup blueprint not found! Maybe it wasn't uploaded yet?")
+				end
+			end
 			web_dialog.execute_script('ezhome_download_callback()')
 		end
 		d.add_action_callback("dimensions") do |web_dialog, action_name|
@@ -188,7 +354,7 @@ UI.add_context_menu_handler do |context_menu|
 			convert_dimensions_to_just_feet
 		end
 
-		d.set_url('http://sketchup-plugin-website.ezhome.io/index.html')
+		d.set_url('http://sketchup-plugin-website.ezhome.io/test/index.html')
 		d.show()
 	}
 end
