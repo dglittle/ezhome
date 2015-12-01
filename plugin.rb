@@ -360,6 +360,8 @@ UI.add_context_menu_handler do |context_menu|
 				data["modified_at"] = Time.now.to_f * 1000
 
 				patch_to_firebase('home/' + slug, auth_token, data)
+
+				UI.messagebox("Blueprint uploaded!")
 			end
 
 			web_dialog.execute_script('ezhome_upload_callback()')
@@ -376,6 +378,7 @@ UI.add_context_menu_handler do |context_menu|
 							file << open(house_data["skp_url"], { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }).read
 					end
 					Sketchup.open_file(randomName)
+					UI.messagebox("Blueprint downloaded!")
 				else
 					UI.messagebox("Sketchup blueprint not found! Maybe it wasn't uploaded yet?")
 				end
