@@ -1,8 +1,6 @@
 
 p 'version 31'
 
-$ezhomeFirebaseName = 'ezh-estimator-dev'
-
 require 'sketchup.rb'
 require 'net/http'
 require 'net/https'
@@ -110,7 +108,9 @@ def get_file_base64()
 		m.save_copy 'delete_me.skp'
 	end
 	x = IO.binread('delete_me.skp')
-	return Base64.encode64(x)
+	x = Base64.encode64(x)
+	x.gsub!("\n", '')
+	return x
 end
 
 def render_to_data_url(width)
@@ -143,67 +143,52 @@ def calc_scale(width)
 	end
 end
 
-def gather_ezhome_data()
-	# work here
-	p 'checkpoint 2'
+def gather_ezhome_data(includeSkpFile)
 	h = {}
-	h['skp'] = get_file_base64()
-	p 'checkpoint 3'
-	h['img'] = render_to_data_url(1000)
-	p 'checkpoint 4'
-	h['scale (in per px)'] = calc_scale(1000)
-	p 'checkpoint 5'
-	h['time'] = Time.now.to_f * 1000
-	p 'checkpoint 6'
-	h['lot (in^2)'] = layer_area_xy('lot')
-	p 'checkpoint 7'
-	h['soft (in^2)'] = layer_area_xy('soft')
-	h['hard (in^2)'] = layer_area_xy('hard')
-	h['pool (in^2)'] = layer_area_xy('pool')
-	h['flawn (in^2)'] = layer_area_xy('flawn')
-	p 'checkpoint 8'
-	h['flawn (in)'] = layer_perimeter_xy('flawn')
-	p 'checkpoint 9'
-	h['blawn (in^2)'] = layer_area_xy('blawn')
-	h['blawn (in)'] = layer_perimeter_xy('blawn')
-	h['building (in^2)'] = layer_area_xy('building')
-	h['north'] = get_north()
-	p 'checkpoint 10'
+	if includeSkpFile then
+		h['skp'] = get_file_base64()
+	end
+	h['house_img'] = render_to_data_url(3000)
+	h['house_img_ft_per_px'] = calc_scale(3000) / 12
+	h['lot_area_sqft'] = layer_area_xy('lot') / 144
+	h['soft_area_sqft'] = layer_area_xy('soft') / 144
+	h['hard_area_sqft'] = layer_area_xy('hard') / 144
+	h['pool_area_sqft'] = layer_area_xy('pool') / 144
+	h['front_lawn_area_sqft'] = layer_area_xy('flawn') / 144
+	h['front_lawn_perimeter_ft'] = layer_perimeter_xy('flawn') / 12
+	h['back_lawn_area_sqft'] = layer_area_xy('blawn') / 144
+	h['back_lawn_perimeter_ft'] = layer_perimeter_xy('blawn') / 12
+	h['building_area_sqft'] = layer_area_xy('building') / 144
+	h['north_radians_counterclockwise_from_right'] = get_north()
 	return h
-end
-
-def post_to_firebase(homeKey)
-	https = Net::HTTP.new($ezhomeFirebaseName + '.firebaseio.com', 443)
-	https.use_ssl = true
-	https.verify_mode = OpenSSL::SSL::VERIFY_NONE
-	https.send_request('PATCH', '/home/' + URI.escape(homeKey) + '/.json', JSON.generate(gather_ezhome_data()))
 end
 
 UI.add_context_menu_handler do |context_menu|
 	context_menu.add_item("ezez") {
 		d = UI::WebDialog.new("ezez", false, "ezez", 600, 600, 0, 0, true)
-		d.add_action_callback("slurp") do |web_dialog, action_name|
-			# work here
-			p 'checkpoint 1'
-			web_dialog.execute_script('ezhome_slurp_callback(' + JSON.generate(gather_ezhome_data()) + ')')
-			p 'checkpoint 11'
+		d.add_action_callback("view") do |web_dialog, action_name|
+			p 'view...'
+			web_dialog.execute_script('ezhome_view_callback(' + JSON.generate(gather_ezhome_data(false)) + ')')
 		end
 		d.add_action_callback("upload") do |web_dialog, action_name|
-			post_to_firebase(action_name.to_s)
+			p 'upload...'
+			web_dialog.execute_script('ezhome_upload_callback(' + JSON.generate(gather_ezhome_data(true)) + ')')
 		end
 		d.add_action_callback("download") do |web_dialog, action_name|
-			x = 'https://' + $ezhomeFirebaseName + '.firebaseio.com/home/' + URI.escape(action_name) + '/skp.json'
+			p 'download...'
+			x = action_name
 			x = open(x, { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }).read
-			x = eval(x)
-			x = Base64.decode64(x)
 			randomName = 'untitled_' + random_name() + '.skp'
 			File.open(randomName, 'w').write(x)
 			Sketchup.open_file(randomName)
+			web_dialog.execute_script('ezhome_download_callback()')
 		end
 		d.add_action_callback("dimensions") do |web_dialog, action_name|
+			p 'dimensions...'
 			convert_dimensions_to_just_feet
 		end
-		d.set_url('http://dglittle.github.io/ezhome/index.html')
+
+		d.set_url('http://sketchup-plugin-website.ezhome.io/index.html')
 		d.show()
 	}
 end
